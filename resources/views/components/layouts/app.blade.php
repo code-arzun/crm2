@@ -21,6 +21,7 @@
             <a href="{{ route('dashboard') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('dashboard') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                 Dashboard
             </a>
+            @role('superadmin|admin|sales')
             <!-- Menu placeholder untuk fase berikutnya -->
                 <a href="{{ route('customers.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customers.index') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                     Customer
@@ -28,12 +29,27 @@
             <a href="{{ route('products.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700">
                 Produk
             </a>
-            <a href="{{ route('orders.my') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700">
-                Pesanan Saya
-            </a>
-            @role('superadmin|admin|sales')
             <a href="{{ route('admin.orders') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700">
                 Kelola Pesanan (Admin)
+            </a>
+            <a href="{{ route('payments.verify') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('payments.verify') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                Verifikasi Pembayaran
+            </a>
+            @endrole
+            @role('superadmin|admin|warehouse')
+            <a href="{{ route('warehouse.shipments') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('warehouse.shipments') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                Antrean Pengiriman
+            </a>
+            @endrole
+            @role('customer')
+            <a href="{{ route('catalog.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700">
+                Katalog Produk
+            </a>
+            <a href="{{ route('orders.create') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700">
+                Checkout
+            </a>
+            <a href="{{ route('orders.my') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700">
+                Pesanan Saya
             </a>
             @endrole
         </nav>
@@ -48,7 +64,13 @@
             </div>
 
             <!-- Profil & Logout -->
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-6"> <!-- ubah space-x-4 jadi space-x-6 -->
+                
+                <!-- Tambahkan ini jika yang login adalah customer -->
+                @role('customer')
+                    <livewire:cart-icon />
+                @endrole
+
                 <span class="text-sm font-medium text-zinc-900 dark:text-white">{{ auth()->user()->name }}</span>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

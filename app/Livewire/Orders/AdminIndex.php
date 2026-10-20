@@ -41,7 +41,14 @@ class AdminIndex extends Component
             'catatan' => 'Disetujui via dashboard admin'
         ]);
 
-        $this->dispatch('notify', message: 'Pesanan ' . $order->kode_order . ' berhasil disetujui.');
+        if (!$order->invoice) {
+            $order->invoice()->create([
+                'nomor_invoice' => \App\Models\Invoice::generateNomor(),
+                'issued_at' => now(),
+            ]);
+        }
+
+        $this->dispatch('notify', message: 'Pesanan ' . $order->kode_order . ' disetujui & invoice berhasil dibuat.');
     }
 
     public function render()

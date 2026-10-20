@@ -1,75 +1,98 @@
 <div>
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Buat Pesanan Baru</h1>
-        <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Pilih produk yang ingin Anda beli.</p>
+        <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Checkout Pesanan</h1>
+        <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Periksa kembali pesanan Anda sebelum melakukan checkout.</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <!-- KIRI: Pilih Produk & Keranjang -->
+        <!-- KIRI: Keranjang Belanja -->
         <div class="lg:col-span-2 space-y-6">
-            
-            <!-- Form Pilih Produk -->
-            <div class="bg-white dark:bg-zinc-800 p-6 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
-                <h3 class="font-bold text-zinc-900 dark:text-white mb-4">Pilih Produk</h3>
-                
-                <div class="flex gap-4 items-end">
-                    <div class="flex-1">
-                        <select wire:model="selectedProductId" class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">
-                            <option value="">-- Pilih Produk --</option>
-                            @foreach($products as $p)
-                                <option value="{{ $p->id }}">
-                                    {{ $p->kode }} - {{ $p->nama }} (Rp {{ number_format($p->harga_default, 0, ',', '.') }})
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('selectedProductId') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                    </div>
-                    <div class="w-24">
-                        <input wire:model="qty" type="number" min="1" class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white" placeholder="Qty">
-                        @error('qty') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                    </div>
-                    <button wire:click="addToCart" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition h-10">
-                        Tambah
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tabel Keranjang -->
             <div class="bg-white dark:bg-zinc-800 p-6 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
                 <h3 class="font-bold text-zinc-900 dark:text-white mb-4">Keranjang Belanja</h3>
                 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-zinc-200 dark:border-zinc-700 text-sm text-zinc-500">
-                                <th class="py-2">Produk</th>
-                                <th class="py-2">Harga</th>
-                                <th class="py-2 text-center">Qty</th>
-                                <th class="py-2 text-right">Subtotal</th>
-                                <th class="py-2"></th>
+                <!-- TABEL PRODUK -->
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-zinc-200 dark:border-zinc-700 text-sm text-zinc-500">
+                            <th class="py-2">Produk</th>
+                            <th class="py-2">Harga</th>
+                            <th class="py-2 text-center">Qty</th>
+                            <th class="py-2 text-right">Subtotal</th>
+                            <th class="py-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($cart as $item)
+                            <tr class="border-b border-zinc-100 dark:border-zinc-700/50">
+                                <td class="py-3 font-medium text-zinc-900 dark:text-white">{{ $item['nama'] }}</td>
+                                <td class="py-3 text-sm text-zinc-600 dark:text-zinc-400">Rp {{ number_format($item['harga'], 0, ',', '.') }}</td>
+                                
+                                <td class="py-3 text-center">
+                                    <input 
+                                        type="number" 
+                                        min="1" 
+                                        value="{{ $item['qty'] }}"
+                                        wire:change="updateQty({{ $item['id'] }}, $event.target.value)"
+                                        class="w-16 px-2 py-1 text-center border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-900 text-sm"
+                                    >
+                                </td>
+
+                                <td class="py-3 text-right font-medium text-zinc-900 dark:text-white">Rp {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
+                                <td class="py-3 text-right">
+                                    <button wire:click="removeFromCart({{ $item['id'] }})" class="text-red-500 hover:text-red-700 text-sm font-medium">Hapus</button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($cart as $item)
-                                <tr class="border-b border-zinc-100 dark:border-zinc-700/50">
-                                    <td class="py-3 font-medium text-zinc-900 dark:text-white">{{ $item['nama'] }}</td>
-                                    <td class="py-3 text-sm text-zinc-600 dark:text-zinc-400">Rp {{ number_format($item['harga'], 0, ',', '.') }}</td>
-                                    <td class="py-3 text-center text-sm">{{ $item['qty'] }}</td>
-                                    <td class="py-3 text-right font-medium">Rp {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
-                                    <td class="py-3 text-right">
-                                        <button wire:click="removeFromCart({{ $item['id'] }})" class="text-red-500 hover:text-red-700 text-sm">Batal</button>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="py-8 text-center text-zinc-500">Belum ada produk di keranjang.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="py-8 text-center text-zinc-500">
+                                    Keranjang Anda masih kosong. <br>
+                                    <a href="{{ route('catalog.index') }}" class="text-indigo-600 hover:underline mt-2 inline-block">Kembali ke Katalog</a>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+
+                <!-- KOTAK PENCARIAN (Dipisah dari tabel, diberi jarak mt-8) -->
+                <div class="mt-8">
+                    <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Tambah Produk Lain:</label>
+                    
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            wire:model.live.debounce.300ms="searchProduct"
+                            placeholder="Ketik nama atau kode produk untuk mencari..." 
+                            class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        >
+    
+                        <!-- DROPDOWN HASIL PENCARIAN -->
+                        @if(count($this->searchResults) > 0)
+                            <div class="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl overflow-hidden">
+                                @foreach($this->searchResults as $result)
+                                    <button 
+                                        wire:click="addProductFromSearch({{ $result->id }})"
+                                        class="w-full text-left px-4 py-3 hover:bg-indigo-50 dark:hover:bg-zinc-700 border-b border-zinc-100 dark:border-zinc-700/50 last:border-0 flex justify-between items-center transition"
+                                    >
+                                        <div>
+                                            <div class="font-medium text-zinc-900 dark:text-white">{{ $result->nama }}</div>
+                                            <div class="text-xs text-zinc-500">{{ $result->kode }}</div>
+                                        </div>
+                                        <div class="font-bold text-indigo-600">Rp {{ number_format($result->harga_default, 0, ',', '.') }}</div>
+                                    </button>
+                                @endforeach
+                            </div>
+                        @endif
+                        
+                        @if(strlen($searchProduct) >= 2 && count($this->searchResults) === 0)
+                            <div class="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl p-4 text-center text-sm text-zinc-500">
+                                Produk tidak ditemukan.
+                            </div>
+                        @endif
+                    </div>
                 </div>
-                @error('cart') <span class="text-red-500 text-sm mt-2 block">{{ $message }}</span> @enderror
+
+                @error('cart') <span class="text-red-500 text-sm mt-4 block">{{ $message }}</span> @enderror
             </div>
         </div>
 
@@ -105,7 +128,7 @@
                     <textarea wire:model="catatan" rows="2" class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-sm" placeholder="Contoh: Tolong dikirim cepat"></textarea>
                 </div>
 
-                <button wire:click="submitOrder" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-bold transition shadow-sm">
+                <button wire:click="submitOrder" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-bold transition shadow-sm {{ empty($cart) ? 'opacity-50 cursor-not-allowed' : '' }}" @if(empty($cart)) disabled @endif>
                     Buat Pesanan
                 </button>
             </div>

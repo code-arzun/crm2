@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\ShipmentItem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrderItem extends Model
 {
@@ -15,6 +17,7 @@ class OrderItem extends Model
         'product_id',
         'nama_produk',
         'qty',
+        'qty_terkirim',
         'harga',
         'diskon',
         'subtotal',
@@ -57,5 +60,16 @@ class OrderItem extends Model
         static::saving(function (OrderItem $item) {
             $item->subtotal = $item->hitungSubtotal();
         });
+    }
+
+    public function shipmentItems(): HasMany
+    {
+        return $this->hasMany(ShipmentItem::class);
+    }
+
+    // Tambahkan helper untuk cek sisa
+    public function sisaBelumDikirim(): int
+    {
+        return $this->qty - $this->qty_terkirim;
     }
 }

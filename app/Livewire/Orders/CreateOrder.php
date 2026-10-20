@@ -3,57 +3,72 @@
 namespace App\Livewire\Orders;
 
 use App\Models\Order;
-use App\Models\Product;
 use App\Models\Setting;
+use App\Models\Product;
 use Livewire\Component;
 
 class CreateOrder extends Component
 {
-    public $products;
-    public $cart = []; // Array untuk menyimpan item pesanan
-    
-    public $selectedProductId = '';
-    public $qty = 1;
+    public $cart = [];
     public $catatan = '';
+    public $searchProduct = '';
+    public $searchResults = []; // <-- TAMBAHKAN INI
 
     public function mount()
     {
-        // Ambil produk yang aktif dan stoknya ada
-        $this->products = Product::where('is_active', true)->get();
+        $this->cart = session()->get('cart', []);
     }
 
-    public function addToCart()
+    public function updateQty($id, $qty)
     {
-        $this->validate([
-            'selectedProductId' => 'required|exists:products,id',
-            'qty' => 'required|integer|min:1'
-        ]);
-
-        $product = Product::find($this->selectedProductId);
-
-        // Cek apakah produk sudah ada di keranjang
-        if (isset($this->cart[$product->id])) {
-            $this->cart[$product->id]['qty'] += $this->qty;
-            $this->cart[$product->id]['subtotal'] = $this->cart[$product->id]['qty'] * $product->harga_default;
-        } else {
-            // Jika belum, tambahkan baru
-            $this->cart[$product->id] = [
-                'id' => $product->id,
-                'nama' => $product->nama,
-                'harga' => $product->harga_default,
-                'qty' => $this->qty,
-                'subtotal' => $product->harga_default * $this->qty
-            ];
+        if ($qty < 1) {
+            $qty = 1;
         }
 
-        // Reset form input
-        $this->reset(['selectedProductId', 'qty']);
-        $this->dispatch('notify', message: 'Produk ditambahkan ke keranjang.');
+        if (isset($this->cart[$id])) {
+            $this->cart[$id]['qty'] = (int) $qty;
+            $this->cart[$id]['subtotal'] = $this->cart[$id]['qty'] * $this->cart[$id]['harga'];
+            session()->put('cart', $this->cart);
+            $this->dispatch('cart-updated');
+        }
     }
 
     public function removeFromCart($id)
     {
-        unset($this->cart[$id]);
+        if (isset($this->cart[$id])) {
+            unset($this->cart[$id]);
+            session()->put('cart', $this->cart);
+            $this->dispatch('cart-updated');
+            $this->dispatch('notify', message: 'Produk dihapus dari keranjang.');
+        }
+    }
+
+    public function addProductFromSearch($productId)
+    {
+        $product = Product::findOrFail($productId);
+        
+        if ($product->tipe->value === 'barang' && $product->stok < 1) {
+            $this->dispatch('notify', message: 'Stok produk habis.');
+            return;
+        }
+
+        if (isset($this->cart[$productId])) {
+            $this->cart[$productId]['qty']++;
+            $this->cart[$productId]['subtotal'] = $this->cart[$productId]['qty'] * $product->harga_default;
+        } else {
+            $this->cart[$productId] = [
+                'id' => $product->id,
+                'nama' => $product->nama,
+                'harga' => $product->harga_default,
+                'qty' => 1,
+                'subtotal' => $product->harga_default
+            ];
+        }
+
+        session()->put('cart', $this->cart);
+        $this->dispatch('cart-updated');
+        $this->searchProduct = ''; 
+        $this->dispatch('notify', message: 'Produk ditambahkan ke keranjang.');
     }
 
     public function getTotalProperty()
@@ -71,17 +86,15 @@ class CreateOrder extends Component
         $customer = auth()->user()->customer;
         $total = $this->getTotalProperty();
         
-        // Cek PPN dari Setting
         $ppnEnabled = Setting::get('ppn_enabled', false);
         $ppnPersen = Setting::get('ppn_persen', 11);
         $ppn = $ppnEnabled ? $total * ($ppnPersen / 100) : 0;
         $grandTotal = $total + $ppn;
 
-        // Buat Order
         $order = Order::create([
             'customer_id' => $customer->id,
-            'jalur' => 'self_order', // Customer pesan sendiri
-            'status' => 'menunggu_approval', // Sesuai alur, admin/sales harus konfirmasi
+            'jalur' => 'self_order',
+            'status' => 'menunggu_approval',
             'payment_type' => 'transfer',
             'payment_status' => 'unpaid',
             'subtotal' => $total,
@@ -90,7 +103,6 @@ class CreateOrder extends Component
             'catatan' => $this->catatan,
         ]);
 
-        // Simpan detail item ke Order Items
         foreach ($this->cart as $item) {
             $order->items()->create([
                 'product_id' => $item['id'],
@@ -101,12 +113,28 @@ class CreateOrder extends Component
             ]);
         }
 
-        // Arahkan ke halaman Pesanan Saya
+        session()->forget('cart');
+        $this->dispatch('cart-updated'); 
+
         return redirect()->route('orders.my')->with('success', 'Pesanan berhasil dibuat! Menunggu konfirmasi admin.');
     }
 
     public function render()
     {
+        // Selalu reset pencarian di awal render
+        $this->searchResults = [];
+        
+        // Jika ketikan 2 karakter atau lebih, cari produknya
+        if (strlen($this->searchProduct) >= 2) {
+            $this->searchResults = Product::where('is_active', true)
+                ->where(function($query) {
+                    $query->where('nama', 'like', '%' . $this->searchProduct . '%')
+                          ->orWhere('kode', 'like', '%' . $this->searchProduct . '%');
+                })
+                ->limit(5)
+                ->get();
+        }
+
         return view('livewire.orders.create-order')->layout('layouts.app');
     }
 }

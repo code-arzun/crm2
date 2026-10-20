@@ -2,9 +2,6 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
             <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Pesanan Saya</h1>
-            <a href="{{ route('orders.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
-                + Buat Pesanan Baru
-            </a>
             <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Riwayat transaksi pembelian Anda.</p>
         </div>
     </div>
@@ -43,7 +40,7 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-right">
-                                <button class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">Detail</button>
+                                <a href="{{ route('orders.show', $order->id) }}" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">Detail</a>
                             </td>
                         </tr>
                     @empty

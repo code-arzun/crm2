@@ -80,9 +80,9 @@ class Order extends Model
         return $this->hasOne(Invoice::class);
     }
 
-    public function shipment(): HasOne
+    public function shipments(): HasMany
     {
-        return $this->hasOne(Shipment::class);
+        return $this->hasMany(Shipment::class);
     }
 
     public function returns(): HasMany
