@@ -44,6 +44,6 @@ class LengkapiProfil extends Component
 
     public function render()
     {
-        return view('livewire.customer.lengkapi-profil')->layout('layouts.app');
+        return view('livewire.customers.lengkapi-profil')->layout('layouts.app');
     }
 }
