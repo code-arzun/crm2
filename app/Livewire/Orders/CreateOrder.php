@@ -78,6 +78,18 @@ class CreateOrder extends Component
 
     public function submitOrder()
     {
+      $customer = auth()->user()->customer;
+
+        // HARD GATE: Cek kelengkapan profil sebelum lanjut
+        if (!$customer->alamat || !$customer->nama_perusahaan) {
+            // Tampilkan pesan error merah di UI
+            $this->addError('cart', 'Mohon lengkapi Alamat dan Nama Perusahaan Anda terlebih dahulu.');
+            
+            // Arahkan mereka ke halaman lengkapi profil setelah 2 detik (opsional)
+            // Atau cukup tampilkan error, biarkan mereka klik menu profil.
+            return; 
+        }
+      
         if (empty($this->cart)) {
             $this->addError('cart', 'Keranjang belanja masih kosong.');
             return;

@@ -12,6 +12,13 @@ class Index extends Component
 
     public function mount()
     {
+        $customer = auth()->user()->customer;
+        
+        // Jika customer dan profilnya belum lengkap, arahkan ke form lengkapi
+        //if (auth()->user()->hasRole('customer') && (!$customer->alamat || !$customer->nama_perusahaan)) {
+        //    redirect()->route('customer.lengkapi')->send();
+        //}
+    
         // Ambil data keranjang dari session saat halaman dibuka
         $this->cart = session()->get('cart', []);
     }

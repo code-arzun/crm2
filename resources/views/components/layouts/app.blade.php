@@ -51,7 +51,10 @@
             <a href="{{ route('orders.my') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700">
                 Pesanan Saya
             </a>
-            @endrole
+            <a href="{{ route('customer.lengkapi') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customer.lengkapi') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                Profil Perusahaan
+            </a>
+          @endrole
         </nav>
     </aside>
 

@@ -5,6 +5,18 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Banner Peringatan Profil -->
+      @if(auth()->user()->customer && (!auth()->user()->customer->alamat || !auth()->user()->customer->nama_perusahaan))
+          <div class="mb-6 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-center justify-between">
+              <div>
+                  <strong>Profil Anda belum lengkap!</strong> Anda harus melengkapi Alamat dan Nama Perusahaan sebelum bisa melakukan checkout.
+              </div>
+              <a href="{{ route('customer.lengkapi') }}" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-md text-sm font-bold transition">
+                  Lengkapi Sekarang
+              </a>
+          </div>
+      @endif
         
         <!-- KIRI: Keranjang Belanja -->
         <div class="lg:col-span-2 space-y-6">
