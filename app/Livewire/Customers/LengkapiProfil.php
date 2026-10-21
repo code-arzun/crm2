@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Livewire\Customer;
+namespace App\Livewire\Customers;
 
 use Livewire\Component;
 
-class LengkapProfil extends Component
+class LengkapiProfil extends Component
 {
     public $nama_perusahaan = '';
     public $alamat = '';

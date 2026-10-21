@@ -15,6 +15,6 @@
 
     <div class="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
         Belum punya akun? 
-        {{-- <a href="{{ route('register') }}" class="font-medium text-indigo-600 hover:text-indigo-500" wire:navigate>Daftar</a> --}}
+        <a href="{{ route('register') }}" class="font-medium text-indigo-600 hover:text-indigo-500" wire:navigate>Daftar</a>
     </div>
 </div>
