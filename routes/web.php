@@ -13,7 +13,7 @@ use App\Livewire\Payments\VerifyIndex;
 use App\Livewire\Products\Index as ProductsIndex;
 use App\Livewire\Warehouse\Shipments;
 use App\Livewire\Auth\Register;
-use App\Livewire\Customer\LengkapiProfil;
+use App\Livewire\Customers\LengkapiProfil;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -47,4 +47,4 @@ Route::get('/warehouse/shipments', Shipments::class)->middleware(['auth', 'role:
 Route::get('/surat-jalan/{shipment}/download', [InvoiceController::class, 'downloadSuratJalan'])->middleware(['auth'])->name('surat-jalan.download');
 
 Route::get('/register', Register::class)->middleware('guest')->name('register');
-Route::get('/lengkapi-profil', LengkapiProfil::class)->middleware(['auth'])->name('customer.lengkapi');
+Route::get('/lengkapi-profil', LengkapiProfil::class)->middleware(['auth'])->name('customers.lengkapi');
