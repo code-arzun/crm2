@@ -12,7 +12,7 @@
               <div>
                   <strong>Profil Anda belum lengkap!</strong> Anda harus melengkapi Alamat dan Nama Perusahaan sebelum bisa melakukan checkout.
               </div>
-              <a href="{{ route('customer.lengkapi') }}" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-md text-sm font-bold transition">
+              <a href="{{ route('customers.lengkapi') }}" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-md text-sm font-bold transition">
                   Lengkapi Sekarang
               </a>
           </div>
