@@ -97,13 +97,30 @@
                     @else
                         <p class="text-sm text-zinc-500 mb-4">Silakan transfer ke:<br><strong>BCA 123-456-7890</strong><br>a/n PT Contoh Sejahtera</p>
                         
-                        <!-- Form Upload -->
+                        <div class="mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-amber-800">Total Tagihan:</span>
+                                <span class="font-bold text-amber-800">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-amber-800">Sisa Tagihan:</span>
+                                <span class="font-bold text-red-600">Rp {{ number_format($order->sisaTagihan(), 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+
                         <form wire:submit="uploadBukti" class="space-y-3">
+                            <!-- INPUT NOMINAL -->
                             <div>
+                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nominal Transfer (Rp)</label>
+                                <input type="number" wire:model="nominal_bayar" class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">
+                                @error('nominal_bayar') <span class="text-red-500 text-xs block mt-1">{{ $message }}</span> @enderror
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Bukti Transfer</label>
                                 <input type="file" wire:model="bukti_transfer" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                                 @error('bukti_transfer') <span class="text-red-500 text-xs block mt-1">{{ $message }}</span> @enderror
                             </div>
-                            <div wire:loading wire:target="bukti_transfer" class="text-xs text-indigo-600">Mengunggah...</div>
                             
                             <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition">
                                 Unggah Bukti Transfer

@@ -2,18 +2,19 @@
 
 use App\Http\Controllers\InvoiceController;
 use App\Livewire\Auth\Login;
+use App\Livewire\Auth\Register;
 use App\Livewire\Catalog\Index as CatalogIndex;
 use App\Livewire\Customers\Index as CustomersIndex;
+use App\Livewire\Customers\LengkapiProfil;
 use App\Livewire\Dashboard;
 use App\Livewire\Orders\AdminIndex as AdminOrders;
+use App\Livewire\Orders\AdminShow;
 use App\Livewire\Orders\CreateOrder;
 use App\Livewire\Orders\MyOrders as MyOrders;
 use App\Livewire\Orders\Show;
 use App\Livewire\Payments\VerifyIndex;
 use App\Livewire\Products\Index as ProductsIndex;
 use App\Livewire\Warehouse\Shipments;
-use App\Livewire\Auth\Register;
-use App\Livewire\Customers\LengkapiProfil;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -39,6 +40,8 @@ Route::get('/my-orders', MyOrders::class)->middleware(['auth'])->name('orders.my
 Route::get('/my-orders/{id}', Show::class)->middleware(['auth'])->name('orders.show');
 Route::get('/orders/create', CreateOrder::class)->middleware(['auth'])->name('orders.create');
 Route::get('/admin/orders', AdminOrders::class)->middleware(['auth', 'role:superadmin|admin|sales'])->name('admin.orders');
+Route::get('/admin/orders/{id}', AdminShow::class)->middleware(['auth', 'role:superadmin|admin|finance|sales'])->name('admin.orders.show');
+
 Route::get('/payments/verify', VerifyIndex::class)->middleware(['auth', 'role:superadmin|admin|finance'])->name('payments.verify');
 Route::get('/invoice/{order}/download', [InvoiceController::class, 'download'])->middleware(['auth'])->name('invoice.download');
 Route::get('/catalog', CatalogIndex::class)->middleware(['auth'])->name('catalog.index');

@@ -54,12 +54,9 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 @if($order->status->value === 'menunggu_approval')
-                                    <button wire:click="approve({{ $order->id }})" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm font-medium transition shadow-sm">
-                                        Setujui
-                                    </button>
-                                @else
-                                    <button class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">Detail</button>
+                                    <button wire:click="approve({{ $order->id }})" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm font-medium mr-2">Setujui</button>
                                 @endif
+                                <a href="{{ route('admin.orders.show', $order->id) }}" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">Detail</a>
                             </td>
                         </tr>
                     @empty

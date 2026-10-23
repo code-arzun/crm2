@@ -21,6 +21,7 @@ class Customer extends Model
         'telepon',
         'alamat',
         'nama_perusahaan',
+        'kategori_bisnis',
         'segment',
         'total_transaksi',
         'last_order_at',

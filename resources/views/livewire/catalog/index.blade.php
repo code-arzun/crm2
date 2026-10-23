@@ -34,14 +34,14 @@
                         Rp {{ number_format($product->harga_default, 0, ',', '.') }}
                     </div>
                     
-                    <div class="text-xs mt-1 mb-4 
+                    {{-- <div class="text-xs mt-1 mb-4 
                         @if($product->tipe->value === 'jasa') text-purple-600 @elseif($product->stok > 0) text-green-600 @else text-red-600 @endif">
                         @if($product->tipe->value === 'jasa')
                             Jasa / Layanan
                         @else
                             Stok: {{ $product->stok }} {{ $product->satuan }}
                         @endif
-                    </div>
+                    </div> --}}
 
                     <!-- Tombol Keranjang -->
                     <div class="mt-auto">

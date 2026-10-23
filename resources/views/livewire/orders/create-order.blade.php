@@ -4,20 +4,20 @@
         <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Periksa kembali pesanan Anda sebelum melakukan checkout.</p>
     </div>
 
+    <!-- Banner Peringatan Profil -->
+    @if(auth()->user()->customer && (!auth()->user()->customer->alamat || !auth()->user()->customer->nama_perusahaan))
+        <div class="mb-6 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-center justify-between">
+            <div>
+                <strong>Profil Anda belum lengkap!</strong> Anda harus melengkapi Alamat dan Nama Perusahaan sebelum bisa melakukan checkout.
+            </div>
+            <a href="{{ route('customers.lengkapi') }}" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-md text-sm font-bold transition">
+                Lengkapi Sekarang
+            </a>
+        </div>
+    @endif
+      
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-      <!-- Banner Peringatan Profil -->
-      @if(auth()->user()->customer && (!auth()->user()->customer->alamat || !auth()->user()->customer->nama_perusahaan))
-          <div class="mb-6 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-center justify-between">
-              <div>
-                  <strong>Profil Anda belum lengkap!</strong> Anda harus melengkapi Alamat dan Nama Perusahaan sebelum bisa melakukan checkout.
-              </div>
-              <a href="{{ route('customers.lengkapi') }}" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-md text-sm font-bold transition">
-                  Lengkapi Sekarang
-              </a>
-          </div>
-      @endif
-        
         <!-- KIRI: Keranjang Belanja -->
         <div class="lg:col-span-2 space-y-6">
             <div class="bg-white dark:bg-zinc-800 p-6 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">

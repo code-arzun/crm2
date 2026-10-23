@@ -36,7 +36,7 @@ class LengkapiProfil extends Component
         $customer->update([
             'nama_perusahaan' => $this->nama_perusahaan,
             'alamat' => $this->alamat,
-            // 'kategori_bisnis' => $this->kategori_bisnis, // (Butuh migration tambah kolom)
+            'kategori_bisnis' => $this->kategori_bisnis, // (Butuh migration tambah kolom)
         ]);
 
         return redirect()->route('dashboard')->with('success', 'Profil berhasil dilengkapi!');
