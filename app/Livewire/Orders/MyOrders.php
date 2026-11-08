@@ -17,6 +17,7 @@ class MyOrders extends Component
 
         // Ambil order milik customer tersebut
         $orders = Order::query()
+            ->with(['items', 'shipments', 'payments'])
             ->where('customer_id', $customer?->id)
             ->latest()
             ->paginate(10);

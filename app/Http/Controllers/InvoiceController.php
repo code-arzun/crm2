@@ -23,9 +23,9 @@ class InvoiceController extends Controller
         $pdf = Pdf::loadView('pdf.invoice', ['order' => $order]);
         $pdf->setPaper('A4', 'portrait');
 
-        // Perbaikan ada di dua baris ini:
         $namaFile = str_replace('/', '-', $order->invoice->nomor_invoice);
-        return $pdf->download('Invoice-' . $namaFile . '.pdf');
+        
+        return $pdf->stream('Invoice-' . $namaFile . '.pdf');
     }
 
     public function downloadSuratJalan($shipmentId)
@@ -43,6 +43,6 @@ class InvoiceController extends Controller
 
         // return $pdf->download('SuratJalan-' . $shipment->order->kode_order . '.pdf');
         $namaFile = str_replace('/', '-', $shipment->order->kode_order);
-        return $pdf->download('SuratJalan-' . $namaFile . '-SHP' . $shipment->id . '.pdf');
+        return $pdf->stream('SuratJalan-' . $namaFile . '-SHP' . $shipment->id . '.pdf');
     }
 }

@@ -12,11 +12,16 @@ class Shipments extends Component
 {
     use WithPagination;
 
-    public $orderId;
+    // Filter
+    public $search = '';
+    public $filterPeriode = 'semua';
+
+    // Modal
+    public $isShipModalOpen = false;
+    public $selectedOrder = null;
     public $ekspedisi = 'JNE';
     public $no_resi = '';
-    public $qty_kirim = []; // Array untuk menyimpan input qty per item
-    public $isModalOpen = false;
+    public $qty_kirim = [];
 
     public function mount()
     {
@@ -25,10 +30,13 @@ class Shipments extends Component
         }
     }
 
+    public function updatingSearch() { $this->resetPage(); }
+    public function updatingFilterPeriode() { $this->resetPage(); }
+
     public function openShipModal($orderId)
     {
         $order = Order::with('items')->findOrFail($orderId);
-        $this->orderId = $orderId;
+        $this->selectedOrder = $order;
         
         // Isi default qty_kirim dengan sisa yang belum dikirim
         $this->qty_kirim = [];
@@ -37,16 +45,19 @@ class Shipments extends Component
             $this->qty_kirim[$item->id] = $sisa > 0 ? $sisa : 0;
         }
 
-        $this->isModalOpen = true;
+        $this->isShipModalOpen = true;
     }
 
     public function processShipment()
     {
-        $order = Order::with('items')->findOrFail($this->orderId);
+        $order = $this->selectedOrder;
         
+        if (!$order) return;
+
         // 1. Buat data Shipment
         $shipment = Shipment::create([
             'order_id' => $order->id,
+            'user_id' => auth()->id(),
             'ekspedisi' => $this->ekspedisi,
             'no_resi' => $this->no_resi,
             'alamat_kirim' => $order->customer->alamat ?? 'Alamat belum diisi',
@@ -63,13 +74,11 @@ class Shipments extends Component
             if ($qtyKirim > 0) {
                 $adaYangDikirim = true;
                 
-                // Catat di shipment_items
                 $shipment->items()->create([
                     'order_item_id' => $item->id,
                     'qty_dikirim' => $qtyKirim,
                 ]);
 
-                // Update qty_terkirim di order_items
                 $item->increment('qty_terkirim', $qtyKirim);
 
                 // POTONG STOK FISIK
@@ -94,53 +103,52 @@ class Shipments extends Component
             return;
         }
 
-        // 3. Cek apakah semua barang sudah terkirim lunas?
+        // 3. Update Status Order
         $order->refresh();
         $semuaTerkirim = $order->items->every(fn($i) => $i->qty_terkirim >= $i->qty);
         
         if ($semuaTerkirim) {
             $order->update(['status' => 'dikirim']);
         } else {
-            // Status parsial (kita asumsikan status string 'dikirim' tapi belum selesai, 
-            // atau kita bisa buat status baru di masa depan)
             $order->update(['status' => 'diproses']); 
         }
 
-        $this->isModalOpen = false;
+        $order->refresh()->cekSelesai();
+
+        $this->isShipModalOpen = false;
         $this->dispatch('notify', message: 'Pengiriman berhasil diproses.');
-    }
-
-    public $activeTab = 'antrean';
-
-    public function setTab($tab)
-    {
-        $this->activeTab = $tab;
-        $this->resetPage();
     }
 
     public function render()
     {
-        if ($this->activeTab === 'antrean') {
-            // Hanya yang belum selesai terkirim
-            $orders = Order::query()
-                ->with(['customer', 'items', 'shipments'])
-                ->whereIn('status', ['dikonfirmasi', 'diproses'])
-                ->whereHas('items', function($q) {
-                    $q->whereColumn('qty_terkirim', '<', 'qty');
-                })
-                ->latest()
-                ->paginate(10);
-        } else {
-            // Riwayat: Yang sudah selesai terkirim semua
-            $orders = Order::query()
-                ->with(['customer', 'items', 'shipments'])
-                ->whereIn('status', ['dikirim', 'selesai'])
-                ->latest()
-                ->paginate(10);
+        // HANYA TAMPILKAN PESANAN YANG PERLU DIKIRIM
+        $query = Order::query()
+            ->with(['customer', 'items'])
+            ->whereIn('status', ['dikonfirmasi', 'diproses'])
+            ->whereHas('items', function($q) {
+                // Cari yang masih ada sisa belum terkirim
+                $q->whereColumn('qty_terkirim', '<', 'qty');
+            });
+
+        // Filter Pencarian
+        if ($this->search) {
+            $query->where(function($q) {
+                $q->where('kode_order', 'like', '%' . $this->search . '%')
+                  ->orWhereHas('customer', fn($c) => $c->where('nama_lengkap', 'like', '%' . $this->search . '%'));
+            });
+        }
+
+        // Filter Periode
+        if ($this->filterPeriode === 'hari_ini') {
+            $query->whereDate('created_at', today());
+        } elseif ($this->filterPeriode === 'bulan_ini') {
+            $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year);
+        } elseif ($this->filterPeriode === 'tahun_ini') {
+            $query->whereYear('created_at', now()->year);
         }
 
         return view('livewire.warehouse.shipments', [
-            'orders' => $orders
+            'orders' => $query->latest()->paginate(10)
         ])->layout('layouts.app');
     }
 }

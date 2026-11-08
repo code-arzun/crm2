@@ -10,31 +10,36 @@ class AdminIndex extends Component
 {
     use WithPagination;
 
-     public function mount()
-    {
-        // Jika user tidak punya role yang diizinkan, tendang keluar
-        if (!auth()->user()->hasAnyRole(['superadmin', 'admin', 'sales'])) {
-            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
-        }
-    }
-
     public $search = '';
+    public $filterPeriode = 'semua';
+    public $filterStatus = 'semua';
 
     public function updatingSearch()
     {
         $this->resetPage();
     }
 
+    public function updatingFilterPeriode()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFilterStatus()
+    {
+        $this->resetPage();
+    }
+
     public function approve($id)
     {
+        // Pastikan hanya admin/superadmin yang bisa approve (proteksi ganda)
+        if (!auth()->user()->hasAnyRole(['superadmin', 'admin'])) {
+            abort(403);
+        }
+
         $order = Order::findOrFail($id);
         
-        // Ubah status menjadi dikonfirmasi
-        $order->update([
-            'status' => 'dikonfirmasi'
-        ]);
+        $order->update(['status' => 'dikonfirmasi']);
 
-        // Catat siapa yang meng-approve
         $order->approvals()->create([
             'user_id' => auth()->id(),
             'aksi' => 'approve',
@@ -48,20 +53,37 @@ class AdminIndex extends Component
             ]);
         }
 
-        $this->dispatch('notify', message: 'Pesanan ' . $order->kode_order . ' disetujui & invoice berhasil dibuat.');
+        $this->dispatch('notify', message: 'Pesanan ' . $order->kode_order . ' berhasil disetujui.');
     }
 
     public function render()
     {
-        // Admin melihat SEMUA pesanan
-        $orders = Order::query()
-            ->with('customer')
-            ->where('kode_order', 'like', '%' . $this->search . '%')
-            ->orWhereHas('customer', function($query) {
-                $query->where('nama_lengkap', 'like', '%' . $this->search . '%');
-            })
-            ->latest()
-            ->paginate(10);
+        $query = Order::query()->with('customer');
+
+        // 1. Filter Pencarian (Kode Order / Nama Customer)
+        if ($this->search) {
+            $query->where(function($q) {
+                $q->where('kode_order', 'like', '%' . $this->search . '%')
+                  ->orWhereHas('customer', fn($c) => $c->where('nama_lengkap', 'like', '%' . $this->search . '%'));
+            });
+        }
+
+        // 2. Filter Status
+        if ($this->filterStatus !== 'semua') {
+            $query->where('status', $this->filterStatus);
+        }
+
+        // 3. Filter Periode (Opsi B)
+        if ($this->filterPeriode === 'hari_ini') {
+            $query->whereDate('created_at', today());
+        } elseif ($this->filterPeriode === 'bulan_ini') {
+            $query->whereMonth('created_at', now()->month)
+                  ->whereYear('created_at', now()->year);
+        } elseif ($this->filterPeriode === 'tahun_ini') {
+            $query->whereYear('created_at', now()->year);
+        }
+
+        $orders = $query->latest()->paginate(10);
 
         return view('livewire.orders.admin-index', [
             'orders' => $orders

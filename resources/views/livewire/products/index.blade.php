@@ -58,6 +58,7 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <button wire:click="edit({{ $product->id }})" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium mr-3">Edit</button>
+                                <a href="{{ route('products.prices', $product->id) }}" class="text-amber-600 hover:text-amber-900 text-sm font-medium mr-3">Harga Khusus</a>
                                 <button x-data x-on:click.prevent="if(confirm('Hapus produk ini?')) $wire.delete({{ $product->id }})" class="text-red-600 hover:text-red-900 text-sm font-medium">Hapus</button>
                             </td>
                         </tr>
@@ -76,7 +77,7 @@
 
     <!-- MODAL FORM -->
     @if($isModalOpen)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm p-4">
             <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
                 <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-zinc-900 dark:text-white">{{ $productId ? 'Edit Produk' : 'Tambah Produk' }}</h3>

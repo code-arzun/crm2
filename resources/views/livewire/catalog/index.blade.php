@@ -31,7 +31,8 @@
                     <h3 class="font-bold text-zinc-900 dark:text-white leading-tight mb-2 line-clamp-2">{{ $product->nama }}</h3>
                     
                     <div class="text-lg font-bold text-indigo-600 dark:text-indigo-400 mt-auto">
-                        Rp {{ number_format($product->harga_default, 0, ',', '.') }}
+                        {{-- Rp {{ number_format($product->harga_default, 0, ',', '.') }} --}}
+                        Rp {{ number_format($product->hargaUntukCustomer($this->customer), 0, ',', '.') }}
                     </div>
                     
                     {{-- <div class="text-xs mt-1 mb-4 

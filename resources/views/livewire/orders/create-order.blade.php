@@ -90,7 +90,10 @@
                                             <div class="font-medium text-zinc-900 dark:text-white">{{ $result->nama }}</div>
                                             <div class="text-xs text-zinc-500">{{ $result->kode }}</div>
                                         </div>
-                                        <div class="font-bold text-indigo-600">Rp {{ number_format($result->harga_default, 0, ',', '.') }}</div>
+                                        {{-- <div class="font-bold text-indigo-600">Rp {{ number_format($result->harga_default, 0, ',', '.') }}</div> --}}
+                                        <div class="font-bold text-indigo-600">
+                                            Rp {{ number_format($result->hargaUntukCustomer(auth()->user()->customer), 0, ',', '.') }}
+                                        </div>
                                     </button>
                                 @endforeach
                             </div>

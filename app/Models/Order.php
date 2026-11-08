@@ -224,4 +224,32 @@ class Order extends Model
             }
         });
     }
+
+    /**
+     * Cek apakah pesanan sudah memenuhi syarat untuk berstatus 'selesai'.
+     * Syarat: Lunas DAN Semua barang sudah diterima (bukan hanya dikirim).
+     */
+    public function cekSelesai(): void
+    {
+        // 1. Cek apakah pembayaran lunas
+        if ($this->payment_status->value !== 'paid') {
+            return;
+        }
+
+        // 2. Hitung total qty yang dipesan
+        $totalPesan = $this->items->sum('qty');
+        
+        // 3. Hitung total qty yang benar-benar sudah DITERIMA (status resi = 'diterima')
+        $totalDiterima = $this->shipments()
+            ->where('status', 'diterima')
+            ->with('items')
+            ->get()
+            ->flatMap->items
+            ->sum('qty_dikirim');
+
+        // 4. Jika semua barang sudah diterima (>= total pesanan), barulah Selesai
+        if ($totalDiterima >= $totalPesan) {
+            $this->update(['status' => 'selesai']);
+        }
+    }
 }

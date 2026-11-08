@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Payments;
 
+use App\Models\Order;
 use App\Models\Payment;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -10,67 +11,91 @@ class VerifyIndex extends Component
 {
     use WithPagination;
 
-    public $activeTab = 'pending'; // Tab default saat dibuka
+    // Properti Filter
+    public $search = '';
+    public $filterPeriode = 'semua'; // <-- Ini yang hilang tadi
+    public $filterPayStatus = 'semua';
+
+    // Properti Modal
+    public $isPayModalOpen = false;
+    public $selectedOrder = null;
 
     public function mount()
     {
         if (!auth()->user()->hasAnyRole(['superadmin', 'admin', 'finance'])) {
-            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+            abort(403);
         }
     }
 
-    // Fungsi untuk pindah tab
-    public function setTab($tab)
+    // Fungsi Reset Paginasi saat filter berubah
+    public function updatingSearch() { $this->resetPage(); }
+    public function updatingFilterPeriode() { $this->resetPage(); } // <-- Ini juga
+    public function updatingFilterPayStatus() { $this->resetPage(); }
+
+    public function openPayModal($orderId)
     {
-        $this->activeTab = $tab;
-        $this->resetPage(); // Reset paginasi saat pindah tab
+        $this->selectedOrder = Order::with(['payments' => function($q) {
+            $q->where('status', 'pending');
+        }, 'customer'])->findOrFail($orderId);
+        
+        $this->isPayModalOpen = true;
     }
 
-    public function verify($id)
+    public function verify($paymentId)
     {
-        $payment = Payment::findOrFail($id);
+        $payment = Payment::findOrFail($paymentId);
         $payment->verify(auth()->user());
-        $payment->order->syncPaymentStatus();
-
+        $payment->order->refresh()->cekSelesai();
+        
+        $this->isPayModalOpen = false;
+        $this->selectedOrder = null;
         $this->dispatch('notify', message: 'Pembayaran berhasil diverifikasi.');
     }
 
-    public function reject($id)
+    public function reject($paymentId)
     {
-        $payment = Payment::findOrFail($id);
+        $payment = Payment::findOrFail($paymentId);
         $payment->reject(auth()->user(), 'Bukti transfer tidak valid.');
-
+        
+        $this->isPayModalOpen = false;
+        $this->selectedOrder = null;
         $this->dispatch('notify', message: 'Pembayaran ditolak.');
     }
 
-        public function render()
+    public function render()
     {
-        // Jika tab 'unpaid', kita query dari model Order
-        if ($this->activeTab === 'unpaid') {
-            $orders = \App\Models\Order::query()
-                ->with('customer')
-                // Status sudah dikonfirmasi tapi belum ada pembayaran yang diupload
-                ->where('status', 'dikonfirmasi')
-                ->whereDoesntHave('payments')
-                ->latest()
-                ->paginate(10);
+        $query = Order::query()->with(['customer', 'payments']);
 
-            return view('livewire.payments.verify-index', [
-                'orders' => $orders // Kirim variabel orders
-            ])->layout('layouts.app');
+        // 1. Filter Pencarian
+        if ($this->search) {
+            $query->where(function($q) {
+                $q->where('kode_order', 'like', '%' . $this->search . '%')
+                  ->orWhereHas('customer', fn($c) => $c->where('nama_lengkap', 'like', '%' . $this->search . '%'));
+            });
         }
 
-        // Jika tab 'pending' atau 'history', kita query dari model Payment
-        $query = Payment::query()->with(['order.customer']);
+        // 2. Filter Status Pembayaran
+        if ($this->filterPayStatus === 'pending') {
+            $query->whereHas('payments', fn($q) => $q->where('status', 'pending'));
+        } elseif ($this->filterPayStatus === 'unpaid') {
+            $query->whereDoesntHave('payments', fn($q) => $q->whereIn('status', ['pending', 'verified']));
+        } elseif ($this->filterPayStatus === 'partial') {
+            $query->where('payment_status', 'partial');
+        } elseif ($this->filterPayStatus === 'paid') {
+            $query->where('payment_status', 'paid');
+        }
 
-        if ($this->activeTab === 'pending') {
-            $query->where('status', 'pending')->latest();
-        } else {
-            $query->whereIn('status', ['verified', 'rejected'])->latest();
+        // 3. Filter Periode
+        if ($this->filterPeriode === 'hari_ini') {
+            $query->whereDate('created_at', today());
+        } elseif ($this->filterPeriode === 'bulan_ini') {
+            $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year);
+        } elseif ($this->filterPeriode === 'tahun_ini') {
+            $query->whereYear('created_at', now()->year);
         }
 
         return view('livewire.payments.verify-index', [
-            'payments' => $query->paginate(10)
+            'orders' => $query->latest()->paginate(10)
         ])->layout('layouts.app');
     }
 }

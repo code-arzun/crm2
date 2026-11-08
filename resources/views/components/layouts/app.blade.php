@@ -16,45 +16,72 @@
             <span class="text-xl font-bold text-zinc-900 dark:text-white">CRM System</span>
         </div>
 
-        <!-- Menu -->
+                <!-- Menu -->
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+            
             <a href="{{ route('dashboard') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('dashboard') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                 Dashboard
             </a>
-            @role('superadmin|admin|sales')
-            <!-- Menu placeholder untuk fase berikutnya -->
-                <a href="{{ route('customers.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customers.index') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                    Customer
+
+            <!-- MENU KHUSUS ADMIN & SUPERADMIN -->
+            @role('superadmin|admin')
+                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Manajemen</div>
+                
+                <a href="{{ route('admin.orders') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.orders') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Semua Pesanan
                 </a>
-            <a href="{{ route('products.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700">
-                Produk
-            </a>
-            <a href="{{ route('admin.orders') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700">
-                Kelola Pesanan (Admin)
-            </a>
-            <a href="{{ route('payments.verify') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('payments.verify') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                Verifikasi Pembayaran
-            </a>
+                <a href="{{ route('customers.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customers.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Data Customer
+                </a>
+                <a href="{{ route('products.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('products.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Data Produk
+                </a>
             @endrole
+
+            <!-- MENU KHUSUS SALES -->
+            @role('superadmin|admin|sales')
+                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Penjualan</div>
+                <a href="{{ route('admin.orders') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('sales.orders') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Pesanan
+                </a>
+            @endrole
+
+            <!-- MENU KHUSUS FINANCE -->
+            @role('superadmin|admin|finance')
+                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Keuangan</div>
+                <a href="{{ route('payments.verify') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('payments.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Verifikasi Pembayaran
+                </a>
+            @endrole
+
+            <!-- MENU KHUSUS GUDANG -->
             @role('superadmin|admin|warehouse')
-            <a href="{{ route('warehouse.shipments') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('warehouse.shipments') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                Antrean Pengiriman
-            </a>
+                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Gudang</div>
+                <a href="{{ route('warehouse.shipments') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('warehouse.shipments') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Antrean Pengiriman
+                </a>
+                {{-- <a href="{{ route('warehouse.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('warehouse.index') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Stok Gudang
+                </a> --}}
             @endrole
+
+            <!-- MENU KHUSUS CUSTOMER -->
             @role('customer')
-            <a href="{{ route('catalog.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700">
-                Katalog Produk
-            </a>
-            <a href="{{ route('orders.create') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700">
-                Checkout
-            </a>
-            <a href="{{ route('orders.my') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700">
-                Pesanan Saya
-            </a>
-            <a href="{{ route('customers.lengkapi') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customer.lengkapi') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                Profil Perusahaan
-            </a>
-          @endrole
+                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Belanja</div>
+                <a href="{{ route('catalog.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('catalog.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Katalog Produk
+                </a>
+                <a href="{{ route('orders.create') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('orders.create') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Keranjang / Checkout
+                </a>
+                <a href="{{ route('orders.my') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('orders.my', 'orders.show') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Pesanan Saya
+                </a>
+                <a href="{{ route('customers.lengkapi') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customers.lengkapi') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Profil Perusahaan
+                </a>
+            @endrole
+
         </nav>
     </aside>
 

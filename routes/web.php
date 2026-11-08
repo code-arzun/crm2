@@ -14,6 +14,7 @@ use App\Livewire\Orders\MyOrders as MyOrders;
 use App\Livewire\Orders\Show;
 use App\Livewire\Payments\VerifyIndex;
 use App\Livewire\Products\Index as ProductsIndex;
+use App\Livewire\Products\ManagePrices;
 use App\Livewire\Warehouse\Shipments;
 use Illuminate\Support\Facades\Route;
 
@@ -35,12 +36,13 @@ Route::post('/logout', function () {
 Route::get('/customers', CustomersIndex::class)->middleware(['auth'])->name('customers.index');
 
 Route::get('/products', ProductsIndex::class)->middleware(['auth'])->name('products.index');
+Route::get('/admin/products/{productId}/prices', ManagePrices::class)->middleware(['auth', 'role:superadmin|admin|sales'])->name('products.prices');
 
 Route::get('/my-orders', MyOrders::class)->middleware(['auth'])->name('orders.my');
 Route::get('/my-orders/{id}', Show::class)->middleware(['auth'])->name('orders.show');
 Route::get('/orders/create', CreateOrder::class)->middleware(['auth'])->name('orders.create');
 Route::get('/admin/orders', AdminOrders::class)->middleware(['auth', 'role:superadmin|admin|sales'])->name('admin.orders');
-Route::get('/admin/orders/{id}', AdminShow::class)->middleware(['auth', 'role:superadmin|admin|finance|sales'])->name('admin.orders.show');
+Route::get('/admin/orders/{id}', AdminShow::class)->middleware(['auth', 'role:superadmin|admin|finance|sales|warehouse'])->name('admin.orders.show');
 
 Route::get('/payments/verify', VerifyIndex::class)->middleware(['auth', 'role:superadmin|admin|finance'])->name('payments.verify');
 Route::get('/invoice/{order}/download', [InvoiceController::class, 'download'])->middleware(['auth'])->name('invoice.download');

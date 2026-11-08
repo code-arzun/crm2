@@ -52,16 +52,21 @@ class CreateOrder extends Component
             return;
         }
 
+        $hargaDinamis = $product->hargaUntukCustomer(auth()->user()->customer);
+
         if (isset($this->cart[$productId])) {
             $this->cart[$productId]['qty']++;
-            $this->cart[$productId]['subtotal'] = $this->cart[$productId]['qty'] * $product->harga_default;
+            // $this->cart[$productId]['subtotal'] = $this->cart[$productId]['qty'] * $product->harga_default;
+            $this->cart[$productId]['subtotal'] = $this->cart[$productId]['qty'] * $product->hargaDinamis;
         } else {
             $this->cart[$productId] = [
                 'id' => $product->id,
                 'nama' => $product->nama,
-                'harga' => $product->harga_default,
+                // 'harga' => $product->harga_default,
+                'harga' => $product->$hargaDinamis,
                 'qty' => 1,
-                'subtotal' => $product->harga_default
+                // 'subtotal' => $product->harga_default,
+                'subtotal' => $product->$hargaDinamis
             ];
         }
 

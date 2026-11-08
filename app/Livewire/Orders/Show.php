@@ -53,4 +53,35 @@ class Show extends Component
     {
         return view('livewire.orders.show')->layout('layouts.app');
     }
+
+    public function batalkanPesanan()
+    {
+        if ($this->order->status->value === 'menunggu_approval') {
+            $this->order->update(['status' => 'batal']);
+            $this->order->refresh();
+            $this->dispatch('notify', message: 'Pesanan berhasil dibatalkan.');
+        }
+    }
+
+    public function konfirmasiDiterima($shipmentId)
+    {
+        $shipment = \App\Models\Shipment::findOrFail($shipmentId);
+        
+        if ($shipment->order_id !== $this->order->id) {
+            return;
+        }
+
+        $shipment->update([
+            'status' => 'diterima',
+            'received_at' => now(),
+        ]);
+
+        $this->order->refresh();
+        
+        // TAMBAHKAN BARIS INI: Cek apakah pesanan sudah selesai
+        $this->order->cekSelesai();
+        $this->order->refresh();
+
+        $this->dispatch('notify', message: 'Status pengiriman diperbarui menjadi Diterima.');
+    }
 }

@@ -9,6 +9,7 @@ class Index extends Component
 {
     public $search = '';
     public $cart = [];
+    public $customer;
 
     public function mount()
     {
@@ -19,7 +20,7 @@ class Index extends Component
         //    redirect()->route('customer.lengkapi')->send();
         //}
     
-        // Ambil data keranjang dari session saat halaman dibuka
+        $this->customer = auth()->user()->customer;
         $this->cart = session()->get('cart', []);
     }
 
@@ -28,7 +29,7 @@ class Index extends Component
         $product = Product::findOrFail($productId);
         
         // Ambil keranjang dari session
-        $cart = session()->get('cart', []);
+        // $cart = session()->get('cart', []);
 
         // Cek jika stok habis
         if ($product->tipe->value === 'barang' && $product->stok < 1) {
@@ -36,18 +37,22 @@ class Index extends Component
             return;
         }
 
+        $hargaDinamis = $product->hargaUntukCustomer($this->customer);
+
+        $cart = session()->get('cart', []);
+
         // Jika produk sudah ada di keranjang, tambah qty-nya
         if (isset($cart[$productId])) {
             $cart[$productId]['qty']++;
-            $cart[$productId]['subtotal'] = $cart[$productId]['qty'] * $product->harga_default;
+            $cart[$productId]['subtotal'] = $cart[$productId]['qty'] * $hargaDinamis;
         } else {
             // Jika belum ada, buat entri baru
             $cart[$productId] = [
                 'id' => $product->id,
                 'nama' => $product->nama,
-                'harga' => $product->harga_default,
+                'harga' => $hargaDinamis,
                 'qty' => 1,
-                'subtotal' => $product->harga_default
+                'subtotal' => $hargaDinamis
             ];
         }
 

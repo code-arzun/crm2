@@ -14,6 +14,7 @@ class Shipment extends Model
 
     protected $fillable = [
         'order_id',
+        'user_id',
         'ekspedisi',
         'no_resi',
         'alamat_kirim',
@@ -36,6 +37,11 @@ class Shipment extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+     public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     // ========== HELPER ==========
