@@ -177,4 +177,59 @@ class AdminShow extends Component
         $this->order->refresh();
         $this->dispatch('notify', message: 'Pembayaran ditolak.');
     }
+
+        // Properti untuk Modal Diskon
+    public $isDiskonModalOpen = false;
+    public $input_diskon = 0;
+    public $input_diskon_tipe = 'nominal';
+
+    public function openDiskonModal()
+    {
+        // Hanya Admin, Superadmin, Finance yang bisa buka
+        if (!auth()->user()->hasAnyRole(['superadmin', 'admin', 'finance'])) {
+            abort(403);
+        }
+
+        // Isi nilai awal dari database jika sudah ada
+        $this->input_diskon = $this->order->diskon;
+        $this->input_diskon_tipe = $this->order->diskon_tipe ?? 'nominal';
+        
+        $this->isDiskonModalOpen = true;
+    }
+
+    public function simpanDiskon()
+    {
+        if (!auth()->user()->hasAnyRole(['superadmin', 'admin', 'finance'])) {
+            abort(403);
+        }
+
+        $this->validate([
+            'input_diskon' => 'required|numeric|min:0',
+            'input_diskon_tipe' => 'required|in:nominal,persen',
+        ]);
+
+        // Validasi tambahan: jika persen, tidak boleh lebih dari 100
+        if ($this->input_diskon_tipe === 'persen' && $this->input_diskon > 100) {
+            $this->addError('input_diskon', 'Diskon persen tidak boleh lebih dari 100%.');
+            return;
+        }
+
+        $this->order->update([
+            'diskon' => $this->input_diskon,
+            'diskon_tipe' => $this->input_diskon_tipe,
+        ]);
+
+        // Hitung ulang total tagihan berdasarkan setting PPN
+        $ppnPersen = \App\Models\Setting::get('ppn_enabled', false) ? \App\Models\Setting::get('ppn_persen', 11) : 0;
+        $this->order->recalculate($ppnPersen);
+        
+        // Cek apakah invoice perlu di-update nominalnya (jika sudah ada)
+        if ($this->order->invoice) {
+            // (Opsional: Jika invoice sudah terbit, sebaiknya buat invoice baru / revisi)
+        }
+
+        $this->isDiskonModalOpen = false;
+        $this->order->refresh();
+        $this->dispatch('notify', message: 'Diskon berhasil diterapkan.');
+    }
 }

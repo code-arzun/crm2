@@ -41,17 +41,36 @@
                     $isTerkirimSemua = ($totalKirim > 0 && $totalKirim >= $totalPesan);
                 @endphp
 
-                <!-- Tombol Approve (Jika Menunggu) -->
-                @role('superadmin|admin|finance')
-                @if($order->status->value === 'menunggu_approval')
+                <!-- TOMBOL INVOICE (Hanya muncul jika invoice sudah dibuat) -->
+                @if($order->invoice)
                     <div class="flex flex-col items-end">
+                        <span class="text-[10px] uppercase font-bold text-zinc-400 mb-1 tracking-wider">Dokumen</span>
+                        <a href="javascript:void(0)" 
+   onclick="event.preventDefault(); document.getElementById('invoice-modal-admin').classList.remove('hidden');"
+   class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition flex items-center gap-2">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+    Lihat Invoice
+</a>
+                    </div>
+                @endif
+
+                <!-- Tombol Approve & Diskon (Jika Menunggu) -->
+                @if($order->status->value === 'menunggu_approval')
+                    <div class="flex flex-col items-end gap-2">
                         <span class="text-[10px] uppercase font-bold text-zinc-400 mb-1 tracking-wider">Aksi Diperlukan</span>
-                        <button wire:click="approve" wire:confirm="Setujui pesanan ini?" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition">
+                        
+                        <!-- Tombol Diskon -->
+                        @if(auth()->user()->hasAnyRole(['superadmin', 'admin', 'finance']))
+                            <button wire:click="openDiskonModal" class="bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition w-full">
+                                Beri Diskon
+                            </button>
+                        @endif
+
+                        <button wire:click="approve" wire:confirm="Setujui pesanan ini?" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition w-full">
                             Setujui Pesanan
                         </button>
                     </div>
                 @endif
-                @endrole
 
                 <!-- Status Badges -->
                 @if($isLunas && $isTerkirimSemua && in_array($order->status->value, ['diproses', 'dikirim', 'selesai']))
@@ -71,11 +90,11 @@
                 @else
                     <!-- Jika Sedang Berjalan -->
                     <div class="flex gap-3">
+                        <!-- ... (biarkan kode status Pesanan, Pembayaran, Pengiriman yang sudah ada) ... -->
                         <div class="flex flex-col">
                             <span class="text-[10px] uppercase font-bold text-zinc-400 mb-1 tracking-wider">Pesanan</span>
                             <span class="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-md text-xs font-bold border border-blue-200 text-center">{{ $order->status->label() }}</span>
                         </div>
-                        @role('superadmin|admin|finance|sales')
                         <div class="flex flex-col">
                             <span class="text-[10px] uppercase font-bold text-zinc-400 mb-1 tracking-wider">Pembayaran</span>
                             @if($order->payment_status->value === 'paid')
@@ -86,7 +105,6 @@
                                 <span class="px-3 py-1.5 bg-red-100 text-red-800 rounded-md text-xs font-bold border border-red-200 text-center">Belum Bayar</span>
                             @endif
                         </div>
-                        @endrole
                         <div class="flex flex-col">
                             <span class="text-[10px] uppercase font-bold text-zinc-400 mb-1 tracking-wider">Pengiriman</span>
                             @if($totalKirim == 0)
@@ -167,7 +185,7 @@
                         <th class="py-2 text-center text-blue-600">Dikirim</th>
                         <th class="py-2 text-center text-green-600">Terkirim</th>
                         <th class="py-2 text-center">Satuan</th>
-                        <th class="py-2 text-right">Subtotal</th>
+                        <th class="py-2 text-right">Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -202,6 +220,28 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
+        <div class="mt-6 pt-4 space-y-2 w-1/2 ml-auto">
+            <div class="flex justify-between font-bold text-md pt-2 border-t border-zinc-100 dark:border-zinc-700">
+                <span class="text-zinc-500 dark:text-white">Subtotal</span>
+                <span class="text-zinc-600 dark:text-zinc-400">Rp {{ number_format($order->subtotal, 0, ',', '.') }}</span>
+            </div>
+            @if($order->diskon > 0)
+            <div class="flex justify-between font-bold text-md pt-2 border-t border-zinc-100 dark:border-zinc-700">
+                <span class="text-green-500 dark:text-white">Diskon</span>
+                <span class="text-green-600 dark:text-green-400">{{ $order->diskon_tipe === 'persen' ? '('.$order->diskon.'%)' : '' }}</span>
+                <span class="text-green-600 dark:text-green-400">- Rp {{ number_format($order->diskon_tipe === 'persen' ? ($order->subtotal * $order->diskon / 100) : $order->diskon, 0, ',', '.') }}</span>
+            </div>
+            @endif
+            <div class="flex justify-between font-bold text-md pt-2 border-t border-zinc-100 dark:border-zinc-700">
+                <span class="text-red-500 dark:text-white">PPN</span>
+                <span class="text-red-600 dark:text-red-400">Rp {{ number_format($order->ppn, 0, ',', '.') }}</span>
+            </div>
+            
+            <div class="flex justify-between font-bold text-md pt-2 border-t border-zinc-100 dark:border-zinc-700">
+                <span class="text-zinc-900 dark:text-white">Grand Total</span>
+                <span class="text-indigo-600 dark:text-indigo-400">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
+            </div>
         </div>
         <!-- TOMBOL SHORTCUT PENGIRIMAN -->
         <div class="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-700/50 flex justify-end">
@@ -379,5 +419,62 @@
             </div>
         </div>
     @endif
+
+    <!-- MODAL DISKON -->
+    @if($isDiskonModalOpen)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm p-4">
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white">Beri Diskon Pesanan</h3>
+                    <button wire:click="$set('isDiskonModalOpen', false)" class="text-zinc-400 hover:text-zinc-600 text-2xl">&times;</button>
+                </div>
+                <form wire:submit="simpanDiskon" class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Tipe Diskon</label>
+                        <select wire:model="input_diskon_tipe" class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">
+                            <option value="nominal">Nominal (Rp)</option>
+                            <option value="persen">Persentase (%)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                            Nilai Diskon {{ $input_diskon_tipe === 'persen' ? '(%)' : '(Rp)' }}
+                        </label>
+                        <input wire:model="input_diskon" type="number" step="0.01" min="0" class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white font-bold">
+                        @error('input_diskon') <span class="text-red-500 text-xs block mt-1">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                        <button type="button" wire:click="$set('isDiskonModalOpen', false)" class="px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Batal</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm">Terapkan Diskon</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- MODAL INVOICE ADMIN -->
+    <div id="invoice-modal-admin" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-2xl w-full max-w-4xl relative my-8">
+            
+            <!-- Tombol Close -->
+            <button onclick="document.getElementById('invoice-modal-admin').classList.add('hidden');" class="absolute top-4 right-4 text-zinc-500 hover:text-red-500 bg-zinc-100 hover:bg-red-50 p-2 rounded-full transition z-10">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <!-- Isi Invoice -->
+            <div class="p-8 md:p-12 text-zinc-900 dark:text-zinc-200">
+                @include('pdf.partials.invoice-content', ['order' => $order])
+            </div>
+            
+            <!-- Tombol Unduh PDF di dalam Modal Admin -->
+            <div class="p-4 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 flex justify-end rounded-b-xl">
+                <a href="{{ route('invoice.download', $order->id) }}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition">
+                    Unduh PDF
+                </a>
+            </div>
+        </div>
+    </div>
 
 </div>

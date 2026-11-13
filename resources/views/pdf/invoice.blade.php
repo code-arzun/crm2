@@ -91,10 +91,17 @@
             <td class="label">Subtotal:</td>
             <td class="value">Rp {{ number_format($order->subtotal, 0, ',', '.') }}</td>
         </tr>
-        <tr>
-            <td class="label">Diskon:</td>
-            <td class="value">Rp {{ number_format($order->diskon, 0, ',', '.') }}</td>
-        </tr>
+        
+        <!-- BARIS DISKON -->
+        @if($order->diskon > 0)
+            <tr>
+                <td class="label">Diskon {{ $order->diskon_tipe === 'persen' ? '('.$order->diskon.'%)' : '' }}:</td>
+                <td class="value" style="color: #16a34a;">
+                    - Rp {{ number_format($order->diskon_tipe === 'persen' ? ($order->subtotal * $order->diskon / 100) : $order->diskon, 0, ',', '.') }}
+                </td>
+            </tr>
+        @endif
+
         <tr>
             <td class="label">PPN:</td>
             <td class="value">Rp {{ number_format($order->ppn, 0, ',', '.') }}</td>

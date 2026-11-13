@@ -19,6 +19,8 @@ class User extends Authenticatable
         'password',
         'telepon',
         'is_active',
+        'join_date',
+        'resign_date',
     ];
 
     protected $hidden = [
@@ -32,6 +34,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'join_date' => 'date',
+            'resign_date' => 'date',
         ];
     }
 

@@ -20,7 +20,16 @@ class Login extends Component
     {
         $this->validate();
 
+        // Cek kredensial
         if (Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+            
+            // TAMBAHKAN PENGECEKAN INI: Jika user dinonaktifkan, tendang keluar
+            if (!auth()->user()->is_active) {
+                Auth::logout();
+                $this->addError('email', 'Akun Anda telah dinonaktifkan. Silakan hubungi Admin.');
+                return;
+            }
+
             session()->regenerate();
             return redirect()->intended(route('dashboard'));
         }

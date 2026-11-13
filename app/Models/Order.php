@@ -26,6 +26,7 @@ class Order extends Model
         'payment_status',
         'subtotal',
         'diskon',
+        'diskon_tipe',
         'ppn',
         'total',
         'due_date',
@@ -159,13 +160,24 @@ class Order extends Model
     public function recalculate(float $ppnPersen = 0): self
     {
         $subtotal = $this->items()->sum('subtotal');
-        $diskon = (float) $this->diskon;
-        $dpp = max(0, $subtotal - $diskon); // dasar pengenaan pajak
+        
+        // LOGIKA DISKON BARU
+        $diskonNominal = 0;
+        if ($this->diskon_tipe === 'persen') {
+            // Jika diskon dalam bentuk persen, hitung nominalnya
+            $diskonNominal = $subtotal * ($this->diskon / 100);
+        } else {
+            // Jika nominal, langsung pakai angkanya
+            $diskonNominal = (float) $this->diskon;
+        }
+
+        $dpp = max(0, $subtotal - $diskonNominal); // dasar pengenaan pajak
         $ppn = round($dpp * ($ppnPersen / 100), 2);
         $total = $dpp + $ppn;
 
         $this->update([
             'subtotal' => $subtotal,
+            'diskon' => $this->diskon, // Simpan angka asli (misal 10 untuk 10%)
             'ppn' => $ppn,
             'total' => $total,
         ]);

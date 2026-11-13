@@ -103,8 +103,8 @@ class CreateOrder extends Component
         $customer = auth()->user()->customer;
         $total = $this->getTotalProperty();
         
-        $ppnEnabled = Setting::get('ppn_enabled', false);
-        $ppnPersen = Setting::get('ppn_persen', 11);
+        $ppnEnabled = \App\Models\Setting::get('ppn_enabled', false);
+        $ppnPersen = \App\Models\Setting::get('ppn_persen', 11);
         $ppn = $ppnEnabled ? $total * ($ppnPersen / 100) : 0;
         $grandTotal = $total + $ppn;
 

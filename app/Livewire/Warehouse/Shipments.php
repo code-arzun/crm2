@@ -14,6 +14,7 @@ class Shipments extends Component
 
     // Filter
     public $search = '';
+    public $filterShipStatus = 'semua';
     public $filterPeriode = 'semua';
 
     // Modal
@@ -119,18 +120,16 @@ class Shipments extends Component
         $this->dispatch('notify', message: 'Pengiriman berhasil diproses.');
     }
 
+    public function updatingFilterShipStatus() { $this->resetPage(); }
+
     public function render()
     {
-        // HANYA TAMPILKAN PESANAN YANG PERLU DIKIRIM
+        // JANGAN pakai whereHas yang memfilter sisa, tampilkan semua pesanan aktif
         $query = Order::query()
-            ->with(['customer', 'items'])
-            ->whereIn('status', ['dikonfirmasi', 'diproses'])
-            ->whereHas('items', function($q) {
-                // Cari yang masih ada sisa belum terkirim
-                $q->whereColumn('qty_terkirim', '<', 'qty');
-            });
+            ->with(['customer', 'items', 'shipments'])
+            ->whereIn('status', ['dikonfirmasi', 'diproses', 'dikirim', 'selesai']);
 
-        // Filter Pencarian
+        // 1. Filter Pencarian
         if ($this->search) {
             $query->where(function($q) {
                 $q->where('kode_order', 'like', '%' . $this->search . '%')
@@ -138,7 +137,31 @@ class Shipments extends Component
             });
         }
 
-        // Filter Periode
+        // 2. Filter Status Pengiriman (BARU)
+        if ($this->filterShipStatus === 'belum_kirim') {
+            // Belum ada resi sama sekali
+            $query->whereDoesntHave('shipments');
+        } elseif ($this->filterShipStatus === 'dalam_pengiriman') {
+            // Ada resi berstatus 'dikirim' dan semua barang sudah keluar gudang
+            $query->whereHas('shipments', fn($q) => $q->where('status', 'dikirim'))
+                  ->whereDoesntHave('items', fn($q) => $q->whereColumn('qty_terkirim', '<', 'qty'));
+        } elseif ($this->filterShipStatus === 'sebagian') {
+            // Masih ada sisa barang yang belum dikirim
+            $query->whereHas('items', fn($q) => $q->whereColumn('qty_terkirim', '<', 'qty'))
+                  ->whereHas('shipments'); // Tapi sudah pernah dikirim (ada resi)
+        } elseif ($this->filterShipStatus === 'terkirim_semua') {
+            // 1. Pastikan tidak ada sisa barang yang belum keluar gudang
+            $query->whereDoesntHave('items', fn($q) => $q->whereColumn('qty_terkirim', '<', 'qty'))
+                  
+                  // 2. Pastikan TIDAK ADA resi yang masih berstatus 'dikirim' (di jalan)
+                  ->whereDoesntHave('shipments', fn($q) => $q->where('status', 'dikirim'))
+                  
+                  // 3. Pastikan PUNYA resi yang berstatus 'diterima' (minimal 1)
+                  ->whereHas('shipments', fn($q) => $q->where('status', 'diterima'));
+        }
+
+
+        // 3. Filter Periode
         if ($this->filterPeriode === 'hari_ini') {
             $query->whereDate('created_at', today());
         } elseif ($this->filterPeriode === 'bulan_ini') {

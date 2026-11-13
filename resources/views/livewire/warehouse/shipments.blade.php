@@ -1,7 +1,7 @@
 <div>
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Antrean Pengiriman (Gudang)</h1>
+            <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Pengiriman</h1>
             <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Proses pengiriman pesanan yang sudah lunas/dikonfirmasi.</p>
         </div>
     </div>
@@ -12,6 +12,17 @@
             <div class="flex-1 w-full">
                 <label class="block text-xs font-medium text-zinc-500 mb-1">Pencarian</label>
                 <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari No. Order atau Nama Customer..." class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+
+            <div class="w-full md:w-56">
+                <label class="block text-xs font-medium text-zinc-500 mb-1">Status Pengiriman</label>
+                <select wire:model.live="filterShipStatus" class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                    <option value="semua">Semua Pengiriman</option>
+                    <option value="belum_kirim">Belum Dikirim</option>
+                    <option value="dalam_pengiriman">Dalam Pengiriman</option>
+                    <option value="sebagian">Dikirim Sebagian</option>
+                    <option value="terkirim_semua">Terkirim Semua</option>
+                </select>
             </div>
 
             <div class="w-full md:w-48">
@@ -34,13 +45,32 @@
                     <tr class="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-500 dark:text-zinc-400">
                         <th class="px-6 py-4">No. Order & Tanggal</th>
                         <th class="px-6 py-4">Customer</th>
-                        <th class="px-6 py-4">Status Order</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4 text-center">Pengiriman ke-</th>
                         <th class="px-6 py-4 text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
                     @forelse ($orders as $order)
-                        <!-- BARIS BISA DIKLIK KE DETAIL -->
+                        @php
+                            $totalPesan = $order->items->sum('qty');
+                            
+                            $totalDalamPengiriman = $order->shipments
+                                ->filter(fn($s) => $s->status->value === 'dikirim')
+                                ->flatMap->items
+                                ->sum('qty_dikirim');
+
+                            $totalDiterima = $order->shipments
+                                ->filter(fn($s) => $s->status->value === 'diterima')
+                                ->flatMap->items
+                                ->sum('qty_dikirim');
+
+                            $sisaBelumKirim = $totalPesan - $totalDalamPengiriman - $totalDiterima;
+                            
+                            // KUNCI PERBAIKAN: Cek status 'diterima'
+                            $isSelesai = ($totalDiterima >= $totalPesan && $totalPesan > 0);
+                        @endphp
+
                         <tr onclick="window.location='{{ route('admin.orders.show', $order->id) }}'" class="hover:bg-indigo-50/50 dark:hover:bg-zinc-700/50 transition cursor-pointer">
                             
                             <td class="px-6 py-4">
@@ -53,24 +83,41 @@
                                 <div class="text-xs text-zinc-500">{{ $order->customer->alamat ?? '-' }}</div>
                             </td>
                             
+                            <!-- STATUS PENGIRIMAN (3 TAHAP) -->
                             <td class="px-6 py-4">
-                                @if($order->status->value === 'dikonfirmasi')
-                                    <span class="px-2.5 py-1 text-xs font-bold bg-blue-100 text-blue-800 rounded-full border border-blue-200">Siap Dikirim</span>
-                                @elseif($order->status->value === 'diproses')
-                                    <span class="px-2.5 py-1 text-xs font-bold bg-purple-100 text-purple-800 rounded-full border border-purple-200">Dikirim Sebagian</span>
+                                @if($isSelesai)
+                                    <span class="px-2.5 py-1 text-xs font-bold bg-green-100 text-green-800 rounded-full border border-green-200">Terkirim Semua</span>
+                                @elseif($totalDalamPengiriman > 0 && $sisaBelumKirim == 0)
+                                    <span class="px-2.5 py-1 text-xs font-bold bg-blue-100 text-blue-800 rounded-full border border-blue-200">Dalam Pengiriman</span>
+                                @elseif($totalDalamPengiriman > 0 || $totalDiterima > 0)
+                                    <span class="px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-800 rounded-full border border-amber-200">Dikirim Sebagian</span>
+                                @else
+                                    <span class="px-2.5 py-1 text-xs font-bold bg-red-100 text-red-800 rounded-full border border-red-200">Belum Dikirim</span>
+                                @endif
+                            </td>
+
+                            <td class="px-6 py-4 text-center">
+                                @if($order->shipments->count() > 0)
+                                    <span class="font-bold text-zinc-900 dark:text-white">{{ $order->shipments->count() }}</span>
+                                @else
+                                    <span class="text-zinc-400">-</span>
                                 @endif
                             </td>
                             
                             <td class="px-6 py-4 text-right">
-                                <button onclick="event.stopPropagation(); @this.openShipModal({{ $order->id }})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm font-bold shadow-sm transition">
-                                    Proses Kirim
-                                </button>
+                                @if(!$isSelesai)
+                                    <button onclick="event.stopPropagation(); @this.openShipModal({{ $order->id }})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm font-bold shadow-sm transition">
+                                        Proses Kirim
+                                    </button>
+                                @else
+                                    <a href="{{ route('admin.orders.show', $order->id) }}" class="text-indigo-600 hover:text-indigo-900 text-sm font-bold">Lihat Detail &rarr;</a>
+                                @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-10 text-center text-zinc-500 dark:text-zinc-400">
-                                Tidak ada antrean pengiriman saat ini.
+                            <td colspan="5" class="px-6 py-10 text-center text-zinc-500 dark:text-zinc-400">
+                                Tidak ada data pengiriman sesuai filter.
                             </td>
                         </tr>
                     @endforelse

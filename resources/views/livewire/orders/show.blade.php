@@ -160,11 +160,11 @@
             @if($order->invoice)
                 <div class="mt-6 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800 flex justify-between items-center">
                     <p class="text-blue-800 dark:text-blue-300 font-medium">Invoice: <span class="font-bold font-mono">{{ $order->invoice->nomor_invoice }}</span></p>
-                    <a href="{{ route('invoice.download', $order->id) }}" 
-   @click.prevent="$dispatch('open-pdf', { url: '{{ route('invoice.download', $order->id) }}' })"
-   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-sm">
-    Lihat Invoice
-</a>
+                    <button type="button" 
+                            onclick="document.getElementById('invoice-modal').classList.remove('hidden');"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-sm">
+                        Lihat Invoice
+                    </button>
                 </div>
             @endif
         </div>
@@ -183,13 +183,22 @@
                 <!-- KOTAK RINGKASAN TAGIHAN -->
                 <div class="space-y-3 mb-6 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-lg border border-zinc-100 dark:border-zinc-700">
                     <div class="flex justify-between items-center text-sm">
-                        <span class="text-zinc-500 dark:text-zinc-400">Total Tagihan</span>
-                        <span class="font-bold text-zinc-900 dark:text-white">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
+                        <span class="text-zinc-500 dark:text-zinc-400">Subtotal</span>
+                        <span class="font-bold text-zinc-900 dark:text-white">Rp {{ number_format($order->subtotal, 0, ',', '.') }}</span>
                     </div>
+                    
+                    @if($order->diskon > 0)
+                    <div class="flex justify-between items-center text-sm text-green-600">
+                        <span>Diskon</span>
+                        <span class="font-bold">- Rp {{ number_format($order->diskon_tipe === 'persen' ? ($order->subtotal * $order->diskon / 100) : $order->diskon, 0, ',', '.') }}</span>
+                    </div>
+                    @endif
+
                     <div class="flex justify-between items-center text-sm">
-                        <span class="text-zinc-500 dark:text-zinc-400">Sudah Dibayar (Verified)</span>
-                        <span class="font-bold text-green-600">Rp {{ number_format($sudahDibayar, 0, ',', '.') }}</span>
+                        <span class="text-zinc-500 dark:text-zinc-400">PPN</span>
+                        <span class="font-bold text-zinc-900 dark:text-white">Rp {{ number_format($order->ppn, 0, ',', '.') }}</span>
                     </div>
+                    
                     <div class="flex justify-between items-center pt-3 border-t border-zinc-200 dark:border-zinc-700">
                         <span class="font-bold text-zinc-700 dark:text-zinc-300">Sisa Tagihan</span>
                         <span class="font-bold text-xl text-red-600">Rp {{ number_format($order->sisaTagihan(), 0, ',', '.') }}</span>
@@ -210,17 +219,29 @@
                     <!-- Form Upload -->
                     @if($order->sisaTagihan() > 0 && $order->payments->where('status', 'pending')->count() == 0)
                         <div class="mt-2">
-                            <!-- INSTRUKSI TRANSFER (Dibuat lebih ringkas) -->
-                            <div class="flex justify-between items-center bg-blue-50 border border-blue-200 p-4 rounded-lg mb-5">
-                                <div>
-                                    <p class="text-xs text-blue-800 mb-1">Transfer ke Rekening:</p>
-                                    <p class="text-lg font-bold text-blue-900">BCA 123-456-7890</p>
-                                    <p class="text-xs text-blue-800">a/n PT Contoh Sejahtera</p>
+                            <!-- INSTRUKSI TRANSFER (MULTI-REKENING) -->
+                            <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4 border border-blue-200 dark:border-blue-800">
+                                <p class="text-sm text-blue-800 dark:text-blue-300 font-medium mb-3">Silakan transfer ke salah satu rekening berikut:</p>
+                                
+                                @php
+                                    $activeBanks = \App\Models\Setting::get('bank_accounts', []);
+                                    $activeBanks = collect($activeBanks)->where('is_active', true);
+                                @endphp
+
+                                <div class="space-y-3">
+                                    @foreach($activeBanks as $bank)
+                                        <div class="flex justify-between items-center bg-white dark:bg-zinc-800 p-3 rounded-md border border-blue-100 dark:border-zinc-700">
+                                            <div>
+                                                <div class="font-bold text-zinc-900 dark:text-white">{{ $bank['bank_name'] }} - {{ $bank['account_number'] }}</div>
+                                                <div class="text-xs text-zinc-500">a/n {{ $bank['holder'] }}</div>
+                                            </div>
+                                            <button type="button" onclick="navigator.clipboard.writeText('{{ $bank['account_number'] }}'); alert('Nomor rekening disalin!')" class="p-2 text-zinc-400 hover:text-indigo-600 transition" title="Salin Rekening">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                            </button>
+                                        </div>
+                                    @endforeach
                                 </div>
-                                <button type="button" onclick="navigator.clipboard.writeText('1234567890'); alert('Nomor rekening disalin!')" class="p-2 bg-white text-blue-600 rounded-md shadow-sm border border-blue-100 hover:bg-blue-100 transition" title="Salin Rekening">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                                </button>
-                            </div>
+                            </div>                            
 
                             <form wire:submit="uploadBukti" class="space-y-5">
                                 <!-- INPUT NOMINAL -->
@@ -453,25 +474,20 @@
         </div>
     @endif
 
-        <!-- MODAL PREVIEW PDF (Menggunakan Alpine.js) -->
-    <div x-data="{ open: false, pdfUrl: '' }" 
-         @open-pdf.window="open = true; pdfUrl = $event.detail.url"
-         x-show="open" 
-         x-transition.opacity 
-         class="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-75 p-4"
-         style="display: none;">
-        
-        <div class="bg-white w-full max-w-4xl h-[85vh] rounded-xl overflow-hidden flex flex-col shadow-2xl" @click.outside="open = false">
-            <!-- Header Modal -->
-            <div class="flex justify-between items-center p-4 border-b border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700">
-                <h3 class="font-bold text-zinc-900 dark:text-white">Pratinjau Dokumen</h3>
-                <button @click="open = false" class="text-zinc-500 hover:text-red-500 font-bold text-xl">&times;</button>
+    <!-- MODAL INVOICE CUSTOMER -->
+    <div id="invoice-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-2xl w-full max-w-4xl relative my-8">
+            
+            <!-- Tombol Close Modal -->
+            <button onclick="document.getElementById('invoice-modal').classList.add('hidden');" class="absolute top-4 right-4 text-zinc-500 hover:text-red-500 bg-zinc-100 hover:bg-red-50 p-2 rounded-full transition z-10">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <!-- ISI INVOICE (Hanya memanggil isi kontennya) -->
+            <div class="p-8 md:p-12 text-zinc-900 dark:text-zinc-200">
+                @include('pdf.partials.invoice-content', ['order' => $order])
             </div>
             
-            <!-- Iframe PDF -->
-            <div class="flex-1 bg-zinc-100 dark:bg-zinc-900 w-full">
-                <iframe :src="pdfUrl" class="w-full h-full border-0" title="PDF Preview"></iframe>
-            </div>
         </div>
     </div>
 </div>
