@@ -12,7 +12,10 @@ class CreateOrder extends Component
     public $cart = [];
     public $catatan = '';
     public $searchProduct = '';
-    public $searchResults = []; // <-- TAMBAHKAN INI
+    public $searchResults = [];
+    public $isConfirmModalOpen = false;
+    public $metodePengiriman = 'ekspedisi';
+    public $biayaPengiriman = 0;
 
     public function mount()
     {
@@ -81,33 +84,39 @@ class CreateOrder extends Component
         return collect($this->cart)->sum('subtotal');
     }
 
-    public function submitOrder()
+// 1. Fungsi untuk membuka Modal Konfirmasi
+    public function konfirmasiPesanan()
     {
-      $customer = auth()->user()->customer;
+        $customer = auth()->user()->customer;
 
-        // HARD GATE: Cek kelengkapan profil sebelum lanjut
+        // Cek Hard Gate (kelengkapan profil)
         if (!$customer->alamat || !$customer->nama_perusahaan) {
-            // Tampilkan pesan error merah di UI
             $this->addError('cart', 'Mohon lengkapi Alamat dan Nama Perusahaan Anda terlebih dahulu.');
-            
-            // Arahkan mereka ke halaman lengkapi profil setelah 2 detik (opsional)
-            // Atau cukup tampilkan error, biarkan mereka klik menu profil.
-            return; 
+            return;
         }
-      
+
         if (empty($this->cart)) {
             $this->addError('cart', 'Keranjang belanja masih kosong.');
             return;
         }
 
+        // Buka Modal
+        $this->isConfirmModalOpen = true;
+    }
+
+    // 2. Fungsi untuk mengeksekusi pesanan (dipanggil dari dalam modal)
+    public function prosesPesanan()
+    {
         $customer = auth()->user()->customer;
         $total = $this->getTotalProperty();
         
-        $ppnEnabled = \App\Models\Setting::get('ppn_enabled', false);
-        $ppnPersen = \App\Models\Setting::get('ppn_persen', 11);
+        // Cek PPN dari Setting
+        $ppnEnabled = Setting::get('ppn_enabled', false);
+        $ppnPersen = Setting::get('ppn_persen', 11);
         $ppn = $ppnEnabled ? $total * ($ppnPersen / 100) : 0;
         $grandTotal = $total + $ppn;
 
+        // Buat Order
         $order = Order::create([
             'customer_id' => $customer->id,
             'jalur' => 'self_order',
@@ -116,10 +125,13 @@ class CreateOrder extends Component
             'payment_status' => 'unpaid',
             'subtotal' => $total,
             'ppn' => $ppn,
-            'total' => $grandTotal,
+            'metode_pengiriman' => $this->metodePengiriman,
+            'biaya_pengiriman' => $this->biayaPengiriman,
+            'total' => $grandTotal + $this->biayaPengiriman,
             'catatan' => $this->catatan,
         ]);
 
+        // Simpan detail item ke Order Items
         foreach ($this->cart as $item) {
             $order->items()->create([
                 'product_id' => $item['id'],
@@ -130,9 +142,12 @@ class CreateOrder extends Component
             ]);
         }
 
+        // Kosongkan keranjang setelah checkout berhasil
         session()->forget('cart');
         $this->dispatch('cart-updated'); 
+        $this->isConfirmModalOpen = false; // Tutup modal
 
+        // Arahkan ke halaman Pesanan Saya dengan Notifikasi
         return redirect()->route('orders.my')->with('success', 'Pesanan berhasil dibuat! Menunggu konfirmasi admin.');
     }
 

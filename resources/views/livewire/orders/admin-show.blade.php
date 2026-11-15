@@ -46,11 +46,11 @@
                     <div class="flex flex-col items-end">
                         <span class="text-[10px] uppercase font-bold text-zinc-400 mb-1 tracking-wider">Dokumen</span>
                         <a href="javascript:void(0)" 
-   onclick="event.preventDefault(); document.getElementById('invoice-modal-admin').classList.remove('hidden');"
-   class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition flex items-center gap-2">
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-    Lihat Invoice
-</a>
+                            onclick="event.preventDefault(); document.getElementById('invoice-modal-admin').classList.remove('hidden');"
+                            class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                Lihat Invoice
+                        </a>
                     </div>
                 @endif
 
@@ -70,6 +70,14 @@
                             Setujui Pesanan
                         </button>
                     </div>
+                    @if(in_array($order->status->value, ['menunggu_approval', 'dikonfirmasi', 'diproses']))
+                    <div class="flex flex-col items-end gap-2">
+                        <span class="text-[10px] uppercase font-bold text-zinc-400 mb-1 tracking-wider">Logistik</span>
+                        <button wire:click="openOngkirModal" class="bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border border-zinc-300 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition w-full">
+                            Edit Ongkir
+                        </button>
+                    </div>
+                    @endif
                 @endif
 
                 <!-- Status Badges -->
@@ -222,26 +230,27 @@
             </table>
         </div>
         <div class="mt-6 pt-4 space-y-2 w-1/2 ml-auto">
-            <div class="flex justify-between font-bold text-md pt-2 border-t border-zinc-100 dark:border-zinc-700">
-                <span class="text-zinc-500 dark:text-white">Subtotal</span>
-                <span class="text-zinc-600 dark:text-zinc-400">Rp {{ number_format($order->subtotal, 0, ',', '.') }}</span>
-            </div>
-            @if($order->diskon > 0)
-            <div class="flex justify-between font-bold text-md pt-2 border-t border-zinc-100 dark:border-zinc-700">
-                <span class="text-green-500 dark:text-white">Diskon</span>
-                <span class="text-green-600 dark:text-green-400">{{ $order->diskon_tipe === 'persen' ? '('.$order->diskon.'%)' : '' }}</span>
-                <span class="text-green-600 dark:text-green-400">- Rp {{ number_format($order->diskon_tipe === 'persen' ? ($order->subtotal * $order->diskon / 100) : $order->diskon, 0, ',', '.') }}</span>
-            </div>
-            @endif
-            <div class="flex justify-between font-bold text-md pt-2 border-t border-zinc-100 dark:border-zinc-700">
-                <span class="text-red-500 dark:text-white">PPN</span>
-                <span class="text-red-600 dark:text-red-400">Rp {{ number_format($order->ppn, 0, ',', '.') }}</span>
-            </div>
-            
-            <div class="flex justify-between font-bold text-md pt-2 border-t border-zinc-100 dark:border-zinc-700">
-                <span class="text-zinc-900 dark:text-white">Grand Total</span>
-                <span class="text-indigo-600 dark:text-indigo-400">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
-            </div>
+                <div class="flex justify-between font-bold text-lg">
+                    <span class="text-zinc-500">Subtotal</span>
+                    <span class="text-zinc-900 dark:text-white">Rp {{ number_format($order->subtotal, 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-zinc-500">Diskon</span>
+                    <span class="text-zinc-900 dark:text-white">{{ number_format($order->diskon, 0, ',', '.') }}%</span>
+                    <span class="text-zinc-900 dark:text-white">- Rp {{ number_format($order->diskon * $order->subtotal, 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-zinc-500">PPN</span>
+                    <span class="text-zinc-900 dark:text-white">Rp {{ number_format($order->ppn, 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-zinc-500">Biaya Pengiriman</span>
+                    <span class="text-zinc-900 dark:text-white">Rp {{ number_format($order->biaya_pengiriman, 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between font-bold text-lg pt-2 border-t border-zinc-100 dark:border-zinc-700">
+                    <span class="text-zinc-900 dark:text-white">Grand Total</span>
+                    <span class="text-indigo-600 dark:text-indigo-400">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
+                </div>
         </div>
         <!-- TOMBOL SHORTCUT PENGIRIMAN -->
         <div class="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-700/50 flex justify-end">
@@ -359,6 +368,13 @@
                                     {{ $shipment->user->name ?? 'Sistem' }}
                                 </td>
                                 <td class="py-3 text-right">
+                                    @if($order->shipments->count() > 0)
+                                        @php $lastShipment = $order->shipments->sortByDesc('id')->first(); @endphp
+                                        <button onclick="event.stopPropagation(); @this.openEditResiModal({{ $lastShipment->id }})" class="bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 px-3 py-1.5 rounded text-sm font-bold shadow-sm transition mr-2">
+                                            Edit Resi
+                                        </button>
+                                    @endif
+
                                     <a href="{{ route('surat-jalan.download', $shipment->id) }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">Lihat Surat Jalan</a>
                                 </td>
                             </tr>
@@ -370,6 +386,78 @@
             <p class="text-sm text-zinc-500">Belum ada riwayat pengiriman untuk pesanan ini.</p>
         @endif
     </div>
+
+    <!-- 6. RIWAYAT RETUR -->
+    @if($order->returns->count() > 0)
+        <div class="mt-6 bg-white dark:bg-zinc-800 p-6 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
+            <h3 class="font-bold text-zinc-900 dark:text-white mb-4">Riwayat Retur</h3>
+            
+            <div class="space-y-3">
+                @foreach($order->returns as $index => $ret)
+                    <div class="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden" x-data="{ open: false }">
+                        
+                                                        <!-- Header Card -->
+                        <div @click="open = !open" class="p-3 flex justify-between items-center cursor-pointer bg-zinc-50 dark:bg-zinc-900/50 hover:bg-zinc-100 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-amber-100 text-amber-700 font-bold w-8 h-8 flex items-center justify-center rounded-full text-xs">
+                                    {{ $index + 1 }}
+                                </div>
+                                <div>
+                                    <!-- Menampilkan Kode Retur -->
+                                    <div class="font-bold text-sm text-zinc-900 dark:text-white font-mono">
+                                        {{ $ret->kode_retur }}
+                                    </div>
+                                    <div class="text-[10px] text-zinc-500 mt-1">
+                                        Diajukan: {{ $ret->created_at->format('d M Y') }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                @if($ret->status->value === 'diajukan')
+                                    <span class="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 rounded-full">Menunggu</span>
+                                @elseif($ret->status->value === 'disetujui')
+                                    <span class="px-2 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-800 rounded-full">Diproses</span>
+                                @elseif($ret->status->value === 'selesai')
+                                    <span class="px-2 py-0.5 text-[10px] font-bold bg-green-100 text-green-800 rounded-full">Selesai</span>
+                                @else
+                                    <span class="px-2 py-0.5 text-[10px] font-bold bg-red-100 text-red-800 rounded-full">Ditolak</span>
+                                @endif
+                                <svg :class="{'rotate-180': open}" class="w-4 h-4 text-zinc-400 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Isi Detail -->
+                        <div x-show="open" x-collapse style="display: none;" class="border-t border-zinc-200 dark:border-zinc-700 p-4 bg-zinc-50/50 dark:bg-zinc-900/20">
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="text-xs text-zinc-500 mb-1">Kategori Alasan</div>
+                                    <div class="text-sm font-medium text-zinc-900 dark:text-white capitalize">{{ str_replace('_', ' ', $ret->alasan_retur) }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-zinc-500 mb-1">Status</div>
+                                    <div class="text-sm font-bold text-zinc-900 dark:text-white">{{ $ret->status->label() }}</div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="text-xs text-zinc-500 mb-1">Catatan Anda</div>
+                                <div class="text-sm text-zinc-700 dark:text-zinc-300">{{ $ret->alasan ?: '-' }}</div>
+                            </div>
+                            
+                            @if($ret->refund_amount > 0)
+                                <div class="pt-3 border-t border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
+                                    <span class="text-sm font-bold text-zinc-700 dark:text-zinc-300">Nominal Refund</span>
+                                    <span class="text-base font-bold text-green-600">Rp {{ number_format($ret->refund_amount, 0, ',', '.') }}</span>
+                                </div>
+                                <div class="text-xs text-zinc-500 text-right mt-1">Metode: {{ $ret->refund_method === 'saldo' ? 'Saldo Akun' : 'Transfer Manual' }}</div>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     <!-- MODAL PENGIRIMAN -->
     @if($isShipModalOpen)
@@ -413,7 +501,16 @@
 
                     <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-700">
                         <button type="button" wire:click="$set('isShipModalOpen', false)" class="px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Batal</button>
-                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm">Konfirmasi Pengiriman</button>
+                        <button type="submit" 
+                                x-data 
+                                x-on:click.prevent="
+                                    if (confirm('Apakah Anda yakin ingin memproses pengiriman ini? Stok akan otomatis berkurang.')) {
+                                        $wire.processShipment();
+                                    }
+                                " 
+                                class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm">
+                            Konfirmasi Pengiriman
+                        </button>
                     </div>
                 </form>
             </div>
@@ -476,5 +573,39 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL EDIT ONGKIR -->
+    @if($isOngkirModalOpen)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm p-4">
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white">Edit Pengiriman</h3>
+                    <button wire:click="$set('isOngkirModalOpen', false)" class="text-zinc-400 hover:text-zinc-600 text-2xl">&times;</button>
+                </div>
+                <form wire:submit="updateOngkir" class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Metode Pengiriman</label>
+                        <select wire:model.live="edit_metode_pengiriman" class="w-full px-3 py-2 border rounded-lg dark:bg-zinc-900 dark:border-zinc-600">
+                            <option value="ekspedisi">Ekspedisi / Kurir</option>
+                            <option value="ambil_sendiri">Ambil Sendiri</option>
+                        </select>
+                    </div>
+                    
+                    @if($edit_metode_pengiriman === 'ekspedisi')
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Biaya Pengiriman (Rp)</label>
+                            <input wire:model="edit_biaya_pengiriman" type="number" min="0" class="w-full px-3 py-2 border rounded-lg dark:bg-zinc-900 dark:border-zinc-600">
+                            @error('edit_biaya_pengiriman') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
+
+                    <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                        <button type="button" wire:click="$set('isOngkirModalOpen', false)" class="px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Batal</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 
 </div>

@@ -17,6 +17,9 @@ use App\Livewire\Orders\Show;
 use App\Livewire\Payments\VerifyIndex;
 use App\Livewire\Products\Index as ProductsIndex;
 use App\Livewire\Products\ManagePrices;
+use App\Livewire\Returns\Index as ReturnsIndex;
+use App\Livewire\Returns\ReceiveIndex;
+use App\Livewire\Returns\Show as ReturnShow;
 use App\Livewire\Settings\Index as SettingsIndex;
 use App\Livewire\Users\Index as UsersIndex;
 use App\Livewire\Warehouse\Index as WarehouseIndex;
@@ -59,6 +62,10 @@ Route::get('/invoice/{order}/download', [InvoiceController::class, 'download'])-
 Route::get('/catalog', CatalogIndex::class)->middleware(['auth'])->name('catalog.index');
 Route::get('/warehouse/logs', StockLog::class)->middleware(['auth', 'role:superadmin|admin|warehouse'])->name('warehouse.logs');
 Route::get('/warehouse', WarehouseIndex::class)->middleware(['auth', 'role:superadmin|admin|warehouse'])->name('warehouse.index');
+
+Route::get('/returns', ReturnsIndex::class)->middleware(['auth', 'role:superadmin|admin|finance'])->name('returns.index');
+Route::get('/returns/receive', ReceiveIndex::class)->middleware(['auth', 'role:superadmin|admin|warehouse'])->name('returns.receive');
+Route::get('/returns/{id}', ReturnShow::class)->middleware(['auth'])->name('returns.show');
 
 Route::get('/warehouse/shipments', Shipments::class)->middleware(['auth', 'role:superadmin|admin|warehouse'])->name('warehouse.shipments');
 Route::get('/surat-jalan/{shipment}/download', [InvoiceController::class, 'downloadSuratJalan'])->middleware(['auth'])->name('surat-jalan.download');

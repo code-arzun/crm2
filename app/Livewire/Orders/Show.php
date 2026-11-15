@@ -84,4 +84,62 @@ class Show extends Component
 
         $this->dispatch('notify', message: 'Status pengiriman diperbarui menjadi Diterima.');
     }
+
+        public $isReturModalOpen = false;
+    public $retur_qty = [];
+    public $retur_alasan = '';
+    public $retur_kategori = 'rusak';
+
+    public function openReturModal()
+    {
+        $this->retur_qty = [];
+        foreach ($this->order->items as $item) {
+            $this->retur_qty[$item->id] = 0;
+        }
+        $this->retur_alasan = '';
+        $this->isReturModalOpen = true;
+    }
+
+    public function ajukanRetur()
+    {
+        $adaYangDiretur = false;
+        $totalQty = 0;
+
+        // 1. Hitung total qty yang diajukan
+        foreach ($this->retur_qty as $itemId => $qty) {
+            if ($qty > 0) {
+                $adaYangDiretur = true;
+                $totalQty += $qty;
+            }
+        }
+
+        if (!$adaYangDiretur) {
+            $this->addError('retur_qty', 'Pilih minimal satu barang untuk diretur.');
+            return;
+        }
+
+        // 2. Buat Header Retur
+        $return = \App\Models\ReturnOrder::create([
+            'order_id' => $this->order->id,
+            'alasan' => $this->retur_alasan,
+            'status' => 'diajukan',
+            'total_qty_diretur' => $totalQty,
+            'metode_retur' => 'ekspedisi', // Default sementara
+        ]);
+
+        // 3. Simpan Detail Barang Retur (return_items)
+        foreach ($this->retur_qty as $itemId => $qty) {
+            if ($qty > 0) {
+                \App\Models\ReturnItem::create([
+                    'return_id' => $return->id,
+                    'order_item_id' => $itemId,
+                    'qty' => $qty,
+                    'alasan_retur' => $this->retur_kategori,
+                ]);
+            }
+        }
+
+        $this->isReturModalOpen = false;
+        $this->dispatch('notify', message: 'Pengajuan retur berhasil dikirim.');
+    }
 }

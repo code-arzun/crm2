@@ -32,6 +32,8 @@ class Order extends Model
         'due_date',
         'catatan',
         'alasan_batal',
+        'metode_pengiriman',
+        'biaya_pengiriman',
     ];
 
     protected function casts(): array
@@ -46,6 +48,7 @@ class Order extends Model
             'ppn' => 'decimal:2',
             'total' => 'decimal:2',
             'due_date' => 'date',
+            'biaya_pengiriman' => 'decimal:2',
         ];
     }
 
@@ -161,23 +164,25 @@ class Order extends Model
     {
         $subtotal = $this->items()->sum('subtotal');
         
-        // LOGIKA DISKON BARU
         $diskonNominal = 0;
         if ($this->diskon_tipe === 'persen') {
-            // Jika diskon dalam bentuk persen, hitung nominalnya
             $diskonNominal = $subtotal * ($this->diskon / 100);
         } else {
-            // Jika nominal, langsung pakai angkanya
             $diskonNominal = (float) $this->diskon;
         }
 
-        $dpp = max(0, $subtotal - $diskonNominal); // dasar pengenaan pajak
+        // DPP = Subtotal - Diskon
+        $dpp = max(0, $subtotal - $diskonNominal); 
+        
+        // PPN dihitung dari DPP
         $ppn = round($dpp * ($ppnPersen / 100), 2);
-        $total = $dpp + $ppn;
+        
+        // GRAND TOTAL = DPP + PPN + Biaya Pengiriman
+        $total = $dpp + $ppn + (float) $this->biaya_pengiriman;
 
         $this->update([
             'subtotal' => $subtotal,
-            'diskon' => $this->diskon, // Simpan angka asli (misal 10 untuk 10%)
+            'diskon' => $this->diskon,
             'ppn' => $ppn,
             'total' => $total,
         ]);

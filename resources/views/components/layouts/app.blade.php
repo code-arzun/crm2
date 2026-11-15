@@ -54,6 +54,9 @@
                 <a href="{{ route('payments.verify') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('payments.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                     Verifikasi Pembayaran
                 </a>
+                <a href="{{ route('returns.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('returns.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Returns / Pengembalian
+                </a>
             @endrole
 
             <!-- MENU KHUSUS GUDANG -->
@@ -69,14 +72,17 @@
                 <a href="{{ route('warehouse.logs') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('warehouse.logs') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                     Riwayat Stok
                 </a>
+                <a href="{{ route('returns.receive') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('returns.receive') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Retur
+                </a>
             @endrole
 
             <!-- MENU KHUSUS CUSTOMER -->
             @role('customer')
-                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Belanja</div>
                 <a href="{{ route('customer.dashboard') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customer.dashboard') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                     Halaman Utama
                 </a>
+                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Belanja</div>
                 <a href="{{ route('catalog.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('catalog.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                     Katalog Produk
                 </a>
@@ -138,7 +144,7 @@
     <div 
         x-data="{ show: false, message: '' }" 
         x-on:notify.window="
-            message = $event.detail[0].message; 
+            message = $event.detail[0]?.message || $event.detail.message; 
             show = true; 
             setTimeout(() => show = false, 3000)
         "

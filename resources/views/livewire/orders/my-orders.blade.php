@@ -1,4 +1,6 @@
 <div>
+    @include('partials.flash-message')
+
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
             <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Pesanan Saya</h1>

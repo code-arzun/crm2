@@ -24,6 +24,17 @@ class Shipments extends Component
     public $no_resi = '';
     public $qty_kirim = [];
 
+    // Properti untuk Modal Edit Resi
+    public $isEditResiModalOpen = false;
+    public $shipmentToEdit = null;
+    public $edit_ekspedisi = '';
+    public $edit_no_resi = '';
+
+    public function updatingSearch() { $this->resetPage(); }
+    public function updatingFilterShipStatus() { $this->resetPage(); }
+    public function updatingFilterPeriode() { $this->resetPage(); }
+
+
     public function mount()
     {
         if (!auth()->user()->hasAnyRole(['superadmin', 'admin', 'warehouse'])) {
@@ -31,9 +42,7 @@ class Shipments extends Component
         }
     }
 
-    public function updatingSearch() { $this->resetPage(); }
-    public function updatingFilterPeriode() { $this->resetPage(); }
-
+    
     public function openShipModal($orderId)
     {
         $order = Order::with('items')->findOrFail($orderId);
@@ -120,8 +129,6 @@ class Shipments extends Component
         $this->dispatch('notify', message: 'Pengiriman berhasil diproses.');
     }
 
-    public function updatingFilterShipStatus() { $this->resetPage(); }
-
     public function render()
     {
         // JANGAN pakai whereHas yang memfilter sisa, tampilkan semua pesanan aktif
@@ -173,5 +180,30 @@ class Shipments extends Component
         return view('livewire.warehouse.shipments', [
             'orders' => $query->latest()->paginate(10)
         ])->layout('layouts.app');
+    }
+
+    public function openEditResiModal($shipmentId)
+    {
+        $shipment = \App\Models\Shipment::findOrFail($shipmentId);
+        $this->shipmentToEdit = $shipment;
+        $this->edit_ekspedisi = $shipment->ekspedisi;
+        $this->edit_no_resi = $shipment->no_resi;
+        $this->isEditResiModalOpen = true;
+    }
+
+    public function updateResi()
+    {
+        $this->validate([
+            'edit_ekspedisi' => 'required|string|max:50',
+            'edit_no_resi' => 'required|string|max:100',
+        ]);
+
+        $this->shipmentToEdit->update([
+            'ekspedisi' => $this->edit_ekspedisi,
+            'no_resi' => $this->edit_no_resi,
+        ]);
+
+        $this->isEditResiModalOpen = false;
+        $this->dispatch('notify', message: 'Data resi berhasil diperbarui.');
     }
 }

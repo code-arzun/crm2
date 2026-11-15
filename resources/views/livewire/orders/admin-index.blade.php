@@ -4,6 +4,31 @@
             <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Kelola Pesanan (Admin)</h1>
             <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Pantau dan setujui pesanan dari customer.</p>
         </div>
+        <!-- Tombol Export Excel -->
+        <div x-data="{ openExport: false }" class="relative">
+            <button @click="openExport = !openExport" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Export Excel
+            </button>
+
+            <!-- Popup Pilihan Tanggal -->
+            <div x-show="openExport" @click.away="openExport = false" style="display: none;" class="absolute right-0 mt-2 w-72 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-700 p-4 z-50">
+                <h4 class="font-bold text-sm mb-3">Filter Tanggal Export</h4>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs text-zinc-500 mb-1">Dari Tanggal</label>
+                        <input type="date" wire:model="exportStartDate" class="w-full px-3 py-1.5 text-sm border rounded-lg dark:bg-zinc-900 dark:border-zinc-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-zinc-500 mb-1">Sampai Tanggal</label>
+                        <input type="date" wire:model="exportEndDate" class="w-full px-3 py-1.5 text-sm border rounded-lg dark:bg-zinc-900 dark:border-zinc-600">
+                    </div>
+                    <button wire:click="export" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-bold transition mt-2">
+                        Unduh Excel
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- TOOLBAR FILTER & PENCARIAN -->

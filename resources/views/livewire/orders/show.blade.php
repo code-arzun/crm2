@@ -38,7 +38,7 @@
                 <!-- LOGIKA 1: JIKA SELESAI (Lunas + Terkirim Semua) -->
                 @if($isLunas && $isTerkirimSemua && in_array($order->status->value, ['diproses', 'dikirim', 'selesai']))
                     <div class="flex flex-col">
-                        <span class="text-[10px] uppercase font-bold text-zinc-400 mb-1 tracking-wider">Status Akhir</span>
+                        <span class="text-[10px] uppercase font-bold text-zinc-400 mb-1 tracking-wider">Status</span>
                         <span class="px-4 py-2 bg-green-100 text-green-800 rounded-lg text-sm font-bold shadow-sm border border-green-200">
                             ✔ Pesanan Selesai
                         </span>
@@ -108,6 +108,12 @@
                 <button @click="tab = 'pengiriman'" :class="{ 'border-indigo-600 text-indigo-600': tab === 'pengiriman', 'border-transparent text-zinc-500': tab !== 'pengiriman' }" class="px-6 py-3 text-sm font-medium border-b-2 transition-colors">
                     Pengiriman
                 </button>
+                <!-- Tab Retur: Muncul HANYA jika ada pengajuan retur terkait pesanan ini -->
+                @if($order->returns()->exists())
+                    <button @click="tab = 'retur'" :class="{ 'border-indigo-600 text-indigo-600': tab === 'retur', 'border-transparent text-zinc-500': tab !== 'retur' }" class="px-6 py-3 text-sm font-medium border-b-2 transition-colors">
+                        Retur
+                    </button>
+                @endif
             @endif
         </div>
 
@@ -138,18 +144,22 @@
             </table>
             
             <div class="mt-6 border-t border-zinc-200 dark:border-zinc-700 pt-4 space-y-2 w-1/2 ml-auto">
-                <div class="flex justify-between text-sm">
+                <div class="flex justify-between font-bold text-lg">
                     <span class="text-zinc-500">Subtotal</span>
                     <span class="text-zinc-900 dark:text-white">Rp {{ number_format($order->subtotal, 0, ',', '.') }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
                     <span class="text-zinc-500">Diskon</span>
                     <span class="text-zinc-900 dark:text-white">{{ number_format($order->diskon, 0, ',', '.') }}%</span>
-                    <span class="text-zinc-900 dark:text-white">Rp {{ number_format($order->diskon * $order->subtotal, 0, ',', '.') }}</span>
+                    <span class="text-zinc-900 dark:text-white">- Rp {{ number_format($order->diskon * $order->subtotal, 0, ',', '.') }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
                     <span class="text-zinc-500">PPN</span>
                     <span class="text-zinc-900 dark:text-white">Rp {{ number_format($order->ppn, 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-zinc-500">Biaya Pengiriman</span>
+                    <span class="text-zinc-900 dark:text-white">Rp {{ number_format($order->biaya_pengiriman, 0, ',', '.') }}</span>
                 </div>
                 <div class="flex justify-between font-bold text-lg pt-2 border-t border-zinc-100 dark:border-zinc-700">
                     <span class="text-zinc-900 dark:text-white">Grand Total</span>
@@ -464,12 +474,96 @@
                 @endif
             </div>
         </div>
+
+        <!-- KONTEN TAB: RETUR -->
+        <div x-show="tab === 'retur'" class="mt-6 space-y-6" style="display: none;">
+            @if($order->returns->count() > 0)
+                <div class="mt-6 bg-white dark:bg-zinc-800 p-6 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
+                    <h3 class="font-bold text-zinc-900 dark:text-white mb-4">Riwayat Retur</h3>
+                    
+                    <div class="space-y-3">
+                        @foreach($order->returns as $index => $ret)
+                            <div class="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden" x-data="{ open: false }">
+                                
+                                                                <!-- Header Card -->
+                                <div @click="open = !open" class="p-3 flex justify-between items-center cursor-pointer bg-zinc-50 dark:bg-zinc-900/50 hover:bg-zinc-100 transition">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-amber-100 text-amber-700 font-bold w-8 h-8 flex items-center justify-center rounded-full text-xs">
+                                            {{ $index + 1 }}
+                                        </div>
+                                        <div>
+                                            <!-- Menampilkan Kode Retur -->
+                                            <div class="font-bold text-sm text-zinc-900 dark:text-white font-mono">
+                                                {{ $ret->kode_retur }}
+                                            </div>
+                                            <div class="text-[10px] text-zinc-500 mt-1">
+                                                Diajukan: {{ $ret->created_at->format('d M Y') }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        @if($ret->status->value === 'diajukan')
+                                            <span class="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 rounded-full">Menunggu</span>
+                                        @elseif($ret->status->value === 'disetujui')
+                                            <span class="px-2 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-800 rounded-full">Diproses</span>
+                                        @elseif($ret->status->value === 'selesai')
+                                            <span class="px-2 py-0.5 text-[10px] font-bold bg-green-100 text-green-800 rounded-full">Selesai</span>
+                                        @else
+                                            <span class="px-2 py-0.5 text-[10px] font-bold bg-red-100 text-red-800 rounded-full">Ditolak</span>
+                                        @endif
+                                        <svg :class="{'rotate-180': open}" class="w-4 h-4 text-zinc-400 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <!-- Isi Detail -->
+                                <div x-show="open" x-collapse style="display: none;" class="border-t border-zinc-200 dark:border-zinc-700 p-4 bg-zinc-50/50 dark:bg-zinc-900/20">
+                                    <div class="grid grid-cols-2 gap-4 mb-3">
+                                        <div>
+                                            <div class="text-xs text-zinc-500 mb-1">Kategori Alasan</div>
+                                            <div class="text-sm font-medium text-zinc-900 dark:text-white capitalize">{{ str_replace('_', ' ', $ret->alasan_retur) }}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs text-zinc-500 mb-1">Status</div>
+                                            <div class="text-sm font-bold text-zinc-900 dark:text-white">{{ $ret->status->label() }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="text-xs text-zinc-500 mb-1">Catatan Anda</div>
+                                        <div class="text-sm text-zinc-700 dark:text-zinc-300">{{ $ret->alasan ?: '-' }}</div>
+                                    </div>
+                                    
+                                    @if($ret->refund_amount > 0)
+                                        <div class="pt-3 border-t border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
+                                            <span class="text-sm font-bold text-zinc-700 dark:text-zinc-300">Nominal Refund</span>
+                                            <span class="text-base font-bold text-green-600">Rp {{ number_format($ret->refund_amount, 0, ',', '.') }}</span>
+                                        </div>
+                                        <div class="text-xs text-zinc-500 text-right mt-1">Metode: {{ $ret->refund_method === 'saldo' ? 'Saldo Akun' : 'Transfer Manual' }}</div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+        </div>
     </div>
 
+    <!-- Tombol Batalkan Pesanan -->
     @if($order->status->value === 'menunggu_approval')
         <div class="mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-700 text-right">
             <button wire:click="batalkanPesanan" wire:confirm="Yakin ingin membatalkan pesanan ini?" class="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-lg text-sm font-bold transition">
                 Batalkan Pesanan
+            </button>
+        </div>
+    @endif
+
+    <!-- Tombol Ajukan Retur -->
+    @if(in_array($order->status->value, ['dikirim', 'selesai']) && auth()->user()->hasRole('customer'))
+        <div class="mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-700 text-right">
+            <button wire:click="openReturModal" class="bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 px-4 py-2 rounded-lg text-sm font-bold transition">
+                Ajukan Retur
             </button>
         </div>
     @endif
@@ -490,4 +584,46 @@
             
         </div>
     </div>
+
+    <!-- MODAL RETUR -->
+    @if($isReturModalOpen)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm p-4">
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white">Ajukan Retur Barang</h3>
+                    <button wire:click="$set('isReturModalOpen', false)" class="text-zinc-400 hover:text-zinc-600 text-2xl">&times;</button>
+                </div>
+                <form wire:submit="ajukanRetur" class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Pilih Barang & Qty yang Diretur</label>
+                        @foreach($order->items as $item)
+                            <div class="flex justify-between items-center py-2 border-b border-zinc-100 dark:border-zinc-700/50">
+                                <span class="text-sm">{{ $item->product->nama ?? 'Produk Dihapus' }} (Beli: {{ $item->qty }})</span>
+                                <input wire:model="retur_qty.{{ $item->id }}" type="number" max="{{ $item->qty }}" min="0" class="w-20 px-2 py-1 text-center border rounded-lg dark:bg-zinc-900 dark:border-zinc-600">
+                            </div>
+                        @endforeach
+                        @error('retur_qty') <span class="text-red-500 text-xs block mt-1">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Kategori Alasan</label>
+                        <select wire:model="retur_kategori" class="w-full px-3 py-2 border rounded-lg dark:bg-zinc-900 dark:border-zinc-600">
+                            <option value="rusak">Barang Rusak</option>
+                            <option value="salah_kirim">Salah Kirim</option>
+                            <option value="tidak_sesuai">Tidak Sesuai Deskripsi</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Detail Alasan</label>
+                        <textarea wire:model="retur_alasan" rows="2" class="w-full px-3 py-2 border rounded-lg dark:bg-zinc-900 dark:border-zinc-600" placeholder="Jelaskan detail kerusakan..."></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                        <button type="button" wire:click="$set('isReturModalOpen', false)" class="px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Batal</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm">Kirim Pengajuan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
 </div>

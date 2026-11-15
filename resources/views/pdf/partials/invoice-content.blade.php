@@ -63,20 +63,26 @@
             <span>Rp {{ number_format($order->subtotal, 0, ',', '.') }}</span>
         </div>
         
-        @if($order->diskon > 0)
-            <div class="flex justify-between text-sm text-green-600">
-                <span>Diskon {{ $order->diskon_tipe === 'persen' ? '('.$order->diskon.'%)' : '' }}</span>
+        {{-- @if($order->diskon > 0) --}}
+            <div class="flex justify-between text-sm">
+                <span class="text-zinc-500">Diskon {{ $order->diskon_tipe === 'persen' ? '('.$order->diskon.'%)' : '' }}</span>
                 <span>- Rp {{ number_format($order->diskon_tipe === 'persen' ? ($order->subtotal * $order->diskon / 100) : $order->diskon, 0, ',', '.') }}</span>
             </div>
-        @endif
+        {{-- @endif --}}
 
         <div class="flex justify-between text-sm">
             <span class="text-zinc-500">PPN</span>
             <span>Rp {{ number_format($order->ppn, 0, ',', '.') }}</span>
         </div>
         
+
+        <div class="flex justify-between text-sm">
+            <span class="text-zinc-500">Biaya Pengiriman</span>
+            <span>Rp {{ number_format($order->biaya_pengiriman, 0, ',', '.') }}</span>
+        </div>
+        
         <div class="flex justify-between font-bold text-lg pt-2 border-t border-zinc-200 dark:border-zinc-700 text-indigo-600">
-            <span>Total Tagihan</span>
+            <span>Grand Total</span>
             <span>Rp {{ number_format($order->total, 0, ',', '.') }}</span>
         </div>
     </div>

@@ -107,7 +107,11 @@
             <td class="value">Rp {{ number_format($order->ppn, 0, ',', '.') }}</td>
         </tr>
         <tr>
-            <td class="label grand-total">Total Tagihan:</td>
+            <td class="label">Biaya Pengiriman:</td>
+            <td class="value">Rp {{ number_format($order->biaya_pengiriman, 0, ',', '.') }}</td>
+        </tr>
+        <tr>
+            <td class="label grand-total">Grand Total:</td>
             <td class="value grand-total">Rp {{ number_format($order->total, 0, ',', '.') }}</td>
         </tr>
     </table>

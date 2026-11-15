@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Warehouse;
 
+use App\Exports\StocksExport;
 use App\Models\Product;
 use App\Models\StockMovement;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Index extends Component
 {
@@ -83,5 +85,11 @@ class Index extends Component
         return view('livewire.warehouse.index', [
             'products' => $products
         ])->layout('layouts.app');
+    }
+    
+    public function export()
+    {
+        $fileName = 'Data_Stok_Gudang_' . now()->format('Ymd_His') . '.xlsx';
+        return Excel::download(new StocksExport(), $fileName);
     }
 }

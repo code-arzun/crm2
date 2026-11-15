@@ -105,12 +105,19 @@
                             </td>
                             
                             <td class="px-6 py-4 text-right">
+                                <!-- TOMBOL BARU: Edit Resi (Hanya muncul jika sudah pernah dikirim) -->
+                                @if($order->shipments->count() > 0)
+                                    @php $lastShipment = $order->shipments->sortByDesc('id')->first(); @endphp
+                                    <button onclick="event.stopPropagation(); @this.openEditResiModal({{ $lastShipment->id }})" class="bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 px-3 py-1.5 rounded text-sm font-bold shadow-sm transition mr-2">
+                                        Edit Resi
+                                    </button>
+                                @endif
+
+                                <!-- Tombol Proses Kirim (Jika belum selesai) -->
                                 @if(!$isSelesai)
                                     <button onclick="event.stopPropagation(); @this.openShipModal({{ $order->id }})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm font-bold shadow-sm transition">
                                         Proses Kirim
                                     </button>
-                                @else
-                                    <a href="{{ route('admin.orders.show', $order->id) }}" class="text-indigo-600 hover:text-indigo-900 text-sm font-bold">Lihat Detail &rarr;</a>
                                 @endif
                             </td>
                         </tr>
@@ -177,10 +184,47 @@
 
                         <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-700">
                             <button type="button" wire:click="$set('isShipModalOpen', false)" class="px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Batal</button>
-                            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm">Konfirmasi Pengiriman</button>
+                            <button type="submit" 
+                                    x-data 
+                                    x-on:click.prevent="
+                                        if (confirm('Apakah Anda yakin ingin memproses pengiriman ini? Stok akan otomatis berkurang.')) {
+                                            $wire.processShipment();
+                                        }
+                                    " 
+                                    class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm">
+                                Konfirmasi Pengiriman
+                            </button>
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- MODAL EDIT RESI -->
+    @if($isEditResiModalOpen && $shipmentToEdit)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm p-4">
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white">Edit Data Resi</h3>
+                    <button wire:click="$set('isEditResiModalOpen', false)" class="text-zinc-400 hover:text-zinc-600 text-2xl">&times;</button>
+                </div>
+                <form wire:submit="updateResi" class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Ekspedisi *</label>
+                        <input wire:model="edit_ekspedisi" type="text" class="w-full px-3 py-2 border rounded-lg dark:bg-zinc-900 dark:border-zinc-600">
+                        @error('edit_ekspedisi') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">No. Resi *</label>
+                        <input wire:model="edit_no_resi" type="text" class="w-full px-3 py-2 border rounded-lg dark:bg-zinc-900 dark:border-zinc-600" placeholder="Masukkan nomor resi dari kurir">
+                        @error('edit_no_resi') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                        <button type="button" wire:click="$set('isEditResiModalOpen', false)" class="px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Batal</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm">Simpan Resi</button>
+                    </div>
+                </form>
             </div>
         </div>
     @endif

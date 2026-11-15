@@ -1,4 +1,6 @@
 <div>
+    @include('partials.flash-message')
+
     <div class="mb-6 flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Pengaturan Sistem</h1>

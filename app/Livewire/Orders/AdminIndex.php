@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Orders;
 
+use App\Exports\OrdersExport;
 use App\Models\Order;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminIndex extends Component
 {
@@ -88,5 +90,27 @@ class AdminIndex extends Component
         return view('livewire.orders.admin-index', [
             'orders' => $orders
         ])->layout('layouts.app');
+    }
+
+    public $exportStartDate = '';
+    public $exportEndDate = '';
+
+    public function export()
+    {
+        $this->validate([
+            'exportStartDate' => 'nullable|date',
+            'exportEndDate' => 'nullable|date|after_or_equal:exportStartDate',
+        ]);
+
+        // LOGIKA PENAMAAN FILE BARU
+        if ($this->exportStartDate && $this->exportEndDate) {
+            // Jika tanggal diisi
+            $fileName = 'Data_Pesanan_' . $this->exportStartDate . '_-_' . $this->exportEndDate . '.xlsx';
+        } else {
+            // Jika kosong, pakai timestamp
+            $fileName = 'Data_Pesanan_' . now()->format('Ymd_His') . '.xlsx';
+        }
+
+        return Excel::download(new OrdersExport($this->exportStartDate, $this->exportEndDate), $fileName);
     }
 }

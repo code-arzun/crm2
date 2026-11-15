@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Payments;
 
+use App\Exports\PaymentsExport;
 use App\Models\Order;
 use App\Models\Payment;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class VerifyIndex extends Component
 {
@@ -62,6 +64,8 @@ class VerifyIndex extends Component
         $this->dispatch('notify', message: 'Pembayaran ditolak.');
     }
 
+    
+
     public function render()
     {
         $query = Order::query()->with(['customer', 'payments']);
@@ -97,5 +101,24 @@ class VerifyIndex extends Component
         return view('livewire.payments.verify-index', [
             'orders' => $query->latest()->paginate(10)
         ])->layout('layouts.app');
+    }
+
+    public $exportStartDate = '';
+    public $exportEndDate = '';
+    
+    public function export()
+    {
+        $this->validate([
+            'exportStartDate' => 'nullable|date',
+            'exportEndDate' => 'nullable|date|after_or_equal:exportStartDate',
+        ]);
+
+        if ($this->exportStartDate && $this->exportEndDate) {
+            $fileName = 'Data_Pembayaran_' . $this->exportStartDate . '_-_' . $this->exportEndDate . '.xlsx';
+        } else {
+            $fileName = 'Data_Pembayaran_' . now()->format('Ymd_His') . '.xlsx';
+        }
+
+        return Excel::download(new PaymentsExport($this->exportStartDate, $this->exportEndDate), $fileName);
     }
 }

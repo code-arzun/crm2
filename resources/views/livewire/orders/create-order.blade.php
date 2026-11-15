@@ -131,10 +131,26 @@
                     </div>
                 </div>
 
+                <div class="mb-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                    <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Metode Pengiriman</label>
+                    <select wire:model.live="metode_pengiriman" class="w-full px-3 py-2 border rounded-lg dark:bg-zinc-900 dark:border-zinc-600 mb-2">
+                        <option value="ekspedisi">Ekspedisi / Kurir</option>
+                        <option value="ambil_sendiri">Ambil Sendiri di Gudang</option>
+                    </select>
+
+                    @if($metodePengiriman === 'ekspedisi')
+                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Estimasi Biaya Kirim (Rp)</label>
+                        <input type="number" wire:model.live="biaya_pengiriman" min="0" class="w-full px-3 py-2 border rounded-lg dark:bg-zinc-900 dark:border-zinc-600" placeholder="0">
+                        <p class="text-xs text-zinc-500 mt-1">*Biaya final akan dikonfirmasi oleh Admin.</p>
+                    @else
+                        <p class="text-xs text-green-600 font-bold">Gratis biaya pengiriman (Ambil di Gudang).</p>
+                    @endif
+                </div>
+
                 <div class="flex justify-between items-center mb-6">
                     <span class="font-bold text-zinc-900 dark:text-white">Total</span>
                     <span class="text-xl font-bold text-indigo-600 dark:text-indigo-400">
-                        Rp {{ number_format($this->getTotalProperty() + $ppn, 0, ',', '.') }}
+                        Rp {{ number_format($this->getTotalProperty() + $ppn + $this->biayaPengiriman, 0, ',', '.') }}
                     </span>
                 </div>
 
@@ -143,11 +159,74 @@
                     <textarea wire:model="catatan" rows="2" class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white text-sm" placeholder="Contoh: Tolong dikirim cepat"></textarea>
                 </div>
 
-                <button wire:click="submitOrder" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-bold transition shadow-sm {{ empty($cart) ? 'opacity-50 cursor-not-allowed' : '' }}" @if(empty($cart)) disabled @endif>
+                <button wire:click="konfirmasiPesanan" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-bold transition shadow-sm {{ empty($cart) ? 'opacity-50 cursor-not-allowed' : '' }}" @if(empty($cart)) disabled @endif>
                     Buat Pesanan
                 </button>
             </div>
         </div>
 
     </div>
+
+    <!-- MODAL KONFIRMASI PESANAN -->
+    @if($isConfirmModalOpen)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm p-4">
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+                
+                <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 flex justify-between items-center bg-zinc-50 dark:bg-zinc-900/50">
+                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white">Konfirmasi Pesanan</h3>
+                    <button wire:click="$set('isConfirmModalOpen', false)" class="text-zinc-400 hover:text-zinc-600 text-2xl leading-none">&times;</button>
+                </div>
+                
+                <div class="p-6">
+                    <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4">Apakah Anda yakin data pesanan berikut sudah benar?</p>
+                    
+                    <!-- Rincian Ringkas -->
+                    <div class="bg-zinc-50 dark:bg-zinc-900/50 rounded-lg p-4 mb-4 border border-zinc-200 dark:border-zinc-700 max-h-48 overflow-y-auto">
+                        <table class="w-full text-left">
+                            <tbody>
+                                @foreach($cart as $item)
+                                    <tr class="border-b border-zinc-100 dark:border-zinc-700/50 last:border-0">
+                                        <td class="py-2 text-sm text-zinc-900 dark:text-white">{{ $item['nama'] }}</td>
+                                        <td class="py-2 text-sm text-center text-zinc-500">{{ $item['qty'] }}x</td>
+                                        <td class="py-2 text-sm text-right font-medium">Rp {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Total -->
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-zinc-500">Subtotal</span>
+                        <span class="text-sm font-medium">Rp {{ number_format($this->getTotalProperty(), 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-4 pb-4 border-b border-zinc-200 dark:border-zinc-700">
+                        <span class="text-sm text-zinc-500">PPN</span>
+                        <span class="text-sm font-medium">
+                            @php $ppn = \App\Models\Setting::get('ppn_enabled', false) ? $this->getTotalProperty() * (\App\Models\Setting::get('ppn_persen', 11) / 100) : 0; @endphp
+                            Rp {{ number_format($ppn, 0, ',', '.') }}
+                        </span>
+                    </div>
+
+                    <div class="flex justify-between items-center mb-6">
+                        <span class="font-bold text-zinc-900 dark:text-white">Grand Total</span>
+                        <span class="text-xl font-bold text-indigo-600">
+                            Rp {{ number_format($this->getTotalProperty() + $ppn, 0, ',', '.') }}
+                        </span>
+                    </div>
+
+                    <!-- Tombol Aksi -->
+                    <div class="flex gap-3">
+                        <button wire:click="$set('isConfirmModalOpen', false)" class="flex-1 px-4 py-2.5 text-sm font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition">
+                            Cek Kembali
+                        </button>
+                        <button wire:click="prosesPesanan" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition shadow-sm">
+                            Ya, Buat Pesanan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+    
 </div>

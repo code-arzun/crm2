@@ -30,6 +30,10 @@ class Login extends Component
                 return;
             }
 
+            if (auth()->user()->hasRole('customer')) {
+                return redirect()->intended(route('customer.dashboard'));
+            }
+
             session()->regenerate();
             return redirect()->intended(route('dashboard'));
         }

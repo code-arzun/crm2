@@ -47,7 +47,7 @@ class AdminShow extends Component
         return view('livewire.orders.admin-show')->layout('layouts.app');
     }
 
-        // Properti untuk Modal Pengiriman
+    // Properti untuk Modal Pengiriman
     public $isShipModalOpen = false;
     public $ekspedisi = 'JNE';
     public $no_resi = '';
@@ -146,7 +146,7 @@ class AdminShow extends Component
         $this->dispatch('notify', message: 'Pengiriman berhasil diproses.');
     }
 
-        public function verifyPayment($paymentId)
+    public function verifyPayment($paymentId)
     {
         $payment = \App\Models\Payment::findOrFail($paymentId);
         
@@ -178,7 +178,43 @@ class AdminShow extends Component
         $this->dispatch('notify', message: 'Pembayaran ditolak.');
     }
 
-        // Properti untuk Modal Diskon
+    // Properti untuk edit ongkir
+    public $isOngkirModalOpen = false;
+    public $edit_biaya_pengiriman = 0;
+    public $edit_metode_pengiriman = 'ekspedisi';
+
+    public function openOngkirModal()
+    {
+        $this->edit_biaya_pengiriman = $this->order->biaya_pengiriman;
+        $this->edit_metode_pengiriman = $this->order->metode_pengiriman;
+        $this->isOngkirModalOpen = true;
+    }
+
+    public function updateOngkir()
+    {
+        $this->validate([
+            'edit_biaya_pengiriman' => 'required|numeric|min:0',
+            'edit_metode_pengiriman' => 'required|in:ekspedisi,ambil_sendiri',
+        ]);
+
+        // Jika ambil sendiri, biaya otomatis 0
+        $biaya = $this->edit_metode_pengiriman === 'ambil_sendiri' ? 0 : $this->edit_biaya_pengiriman;
+
+        $this->order->update([
+            'metode_pengiriman' => $this->edit_metode_pengiriman,
+            'biaya_pengiriman' => $biaya,
+        ]);
+
+        // Hitung ulang total tagihan
+        $ppnPersen = \App\Models\Setting::get('ppn_enabled', false) ? \App\Models\Setting::get('ppn_persen', 11) : 0;
+        $this->order->recalculate($ppnPersen);
+
+        $this->isOngkirModalOpen = false;
+        $this->order->refresh();
+        $this->dispatch('notify', message: 'Biaya pengiriman berhasil diperbarui.');
+    }
+
+    // Properti untuk Modal Diskon
     public $isDiskonModalOpen = false;
     public $input_diskon = 0;
     public $input_diskon_tipe = 'nominal';

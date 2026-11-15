@@ -88,14 +88,14 @@ class Index extends Component
             ]
         );
 
-        $this->dispatch('notify', message: $this->productId ? 'Produk diupdate.' : 'Produk ditambahkan.');
+        $this->dispatch('notify', message: $this->productId ? 'Produk berhasil diperbarui.' : 'Produk berhasil ditambahkan.');
         $this->closeModal();
     }
 
     public function delete($id)
     {
         Product::findOrFail($id)->delete();
-        $this->dispatch('notify', message: 'Produk dihapus.');
+        $this->dispatch('notify', message: 'Produk berhasil dihapus.');
     }
 
     public function closeModal()

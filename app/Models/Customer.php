@@ -26,6 +26,7 @@ class Customer extends Model
         'total_transaksi',
         'last_order_at',
         'is_active',
+        'credit_balance',
     ];
 
     protected function casts(): array
@@ -35,6 +36,7 @@ class Customer extends Model
             'total_transaksi' => 'decimal:2',
             'last_order_at' => 'datetime',
             'is_active' => 'boolean',
+            'credit_balance' => 'decimal:2',
         ];
     }
 
