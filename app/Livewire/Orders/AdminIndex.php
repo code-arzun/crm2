@@ -102,12 +102,9 @@ class AdminIndex extends Component
             'exportEndDate' => 'nullable|date|after_or_equal:exportStartDate',
         ]);
 
-        // LOGIKA PENAMAAN FILE BARU
         if ($this->exportStartDate && $this->exportEndDate) {
-            // Jika tanggal diisi
             $fileName = 'Data_Pesanan_' . $this->exportStartDate . '_-_' . $this->exportEndDate . '.xlsx';
         } else {
-            // Jika kosong, pakai timestamp
             $fileName = 'Data_Pesanan_' . now()->format('Ymd_His') . '.xlsx';
         }
 

@@ -81,8 +81,10 @@
         @endif
     </div>
 
-    <!-- TABEL -->
-    <div class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm">
+        <!-- ========================================== -->
+    <!-- TAMPILAN DESKTOP (TABEL) -->
+    <!-- ========================================== -->
+    <div class="hidden md:block bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
@@ -96,9 +98,7 @@
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
                     @forelse ($orders as $order)
-                        <!-- BARIS BISA DIKLIK & HOVER EFFECT -->
                         <tr onclick="window.location='{{ route('admin.orders.show', $order->id) }}'" class="hover:bg-indigo-50/50 dark:hover:bg-zinc-700/50 transition cursor-pointer">
-                            
                             <td class="px-6 py-4">
                                 <div class="font-mono font-medium text-indigo-600 dark:text-indigo-400">{{ $order->kode_order }}</div>
                                 <div class="text-xs text-zinc-500">{{ $order->created_at->format('d M Y H:i') }}</div>
@@ -111,27 +111,27 @@
                                 Rp {{ number_format($order->total, 0, ',', '.') }}
                             </td>
                             <td class="px-6 py-4">
-                                @if($order->status->value === 'menunggu_approval')
-                                    <span class="px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-800 rounded-full">Menunggu Persetujuan</span>
-                                @elseif($order->status->value === 'dikonfirmasi')
-                                    <span class="px-2.5 py-1 text-xs font-bold bg-blue-100 text-blue-800 rounded-full">Disetujui</span>
-                                @elseif($order->status->value === 'diproses')
-                                    <span class="px-2.5 py-1 text-xs font-bold bg-purple-100 text-purple-800 rounded-full">Diproses</span>
-                                @elseif($order->status->value === 'dikirim')
-                                    <span class="px-2.5 py-1 text-xs font-bold bg-indigo-100 text-indigo-800 rounded-full">Dikirim</span>
-                                @elseif($order->status->value === 'selesai')
-                                    <span class="px-2.5 py-1 text-xs font-bold bg-green-100 text-green-800 rounded-full">Selesai</span>
-                                @elseif($order->status->value === 'batal')
-                                    <span class="px-2.5 py-1 text-xs font-bold bg-red-100 text-red-800 rounded-full">Dibatalkan</span>
-                                @endif
+                                <!-- Status Badge -->
+                                <span class="px-2.5 py-1 text-xs font-bold rounded-full border 
+                                    {{ $order->status->value === 'menunggu_approval' ? 'bg-amber-100 text-amber-800 border-amber-200' : '' }}
+                                    {{ $order->status->value === 'dikonfirmasi' ? 'bg-blue-100 text-blue-800 border-blue-200' : '' }}
+                                    {{ $order->status->value === 'diproses' ? 'bg-purple-100 text-purple-800 border-purple-200' : '' }}
+                                    {{ $order->status->value === 'dikirim' ? 'bg-indigo-100 text-indigo-800 border-indigo-200' : '' }}
+                                    {{ $order->status->value === 'selesai' ? 'bg-green-100 text-green-800 border-green-200' : '' }}
+                                    {{ $order->status->value === 'batal' ? 'bg-red-100 text-red-800 border-red-200' : '' }}
+                                ">
+                                    {{ $order->status->label() }}
+                                </span>
                             </td>
                             <td class="px-6 py-4 text-right">
-                                @role('superadmin|admin|finance')
                                 @if($order->status->value === 'menunggu_approval')
-                                    <button onclick="event.stopPropagation(); if(confirm('Setujui pesanan ini?')) @this.approve({{ $order->id }})" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm font-bold shadow-sm transition">
-                                        Setujui
+                                    <button onclick="event.stopPropagation(); if(confirm('Setujui pesanan ini?')) @this.approve({{ $order->id }})" 
+                                            class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm font-bold shadow-sm transition min-w-[80px] flex justify-center items-center">
+                                        <span wire:loading.remove wire:target="approve({{ $order->id }})">Setujui</span>
+                                        <span wire:loading wire:target="approve({{ $order->id }})" class="flex items-center gap-1">
+                                            @include('partials.spinner')
+                                        </span>
                                     </button>
-                                @endrole
                                 @else
                                     <span class="text-xs text-zinc-400 italic">Lihat Detail &rarr;</span>
                                 @endif
@@ -139,9 +139,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-10 text-center text-zinc-500 dark:text-zinc-400">
-                                Tidak ada pesanan yang sesuai dengan filter Anda.
-                            </td>
+                            <td colspan="5" class="px-6 py-10 text-center text-zinc-500 dark:text-zinc-400">Tidak ada pesanan yang sesuai.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -150,5 +148,62 @@
         @if($orders->hasPages())
             <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">{{ $orders->links() }}</div>
         @endif
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAMPILAN MOBILE (CARD) -->
+    <!-- ========================================== -->
+    <div class="md:hidden space-y-4">
+        @forelse ($orders as $order)
+            <div onclick="window.location='{{ route('admin.orders.show', $order->id) }}'" class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 shadow-sm cursor-pointer active:bg-zinc-50 dark:active:bg-zinc-700 transition">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <div class="font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ $order->kode_order }}</div>
+                        <div class="text-xs text-zinc-500">{{ $order->created_at->format('d M Y H:i') }}</div>
+                    </div>
+                    <!-- Status Badge -->
+                    <span class="px-2.5 py-1 text-[10px] font-bold rounded-full border 
+                        {{ $order->status->value === 'menunggu_approval' ? 'bg-amber-100 text-amber-800 border-amber-200' : '' }}
+                        {{ $order->status->value === 'dikonfirmasi' ? 'bg-blue-100 text-blue-800 border-blue-200' : '' }}
+                        {{ $order->status->value === 'diproses' ? 'bg-purple-100 text-purple-800 border-purple-200' : '' }}
+                        {{ $order->status->value === 'dikirim' ? 'bg-indigo-100 text-indigo-800 border-indigo-200' : '' }}
+                        {{ $order->status->value === 'selesai' ? 'bg-green-100 text-green-800 border-green-200' : '' }}
+                        {{ $order->status->value === 'batal' ? 'bg-red-100 text-red-800 border-red-200' : '' }}
+                    ">
+                        {{ $order->status->label() }}
+                    </span>
+                </div>
+
+                <div class="border-t border-zinc-100 dark:border-zinc-700/50 pt-2 mt-2">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-zinc-500">Customer:</span>
+                        <span class="font-medium text-zinc-900 dark:text-white">{{ $order->customer->nama_lengkap }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-3">
+                        <span class="text-zinc-500">Total:</span>
+                        <span class="font-bold text-zinc-900 dark:text-white">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
+                    </div>
+                    
+                    @if($order->status->value === 'menunggu_approval')
+                        <button onclick="event.stopPropagation(); if(confirm('Setujui pesanan ini?')) @this.approve({{ $order->id }})" 
+                                class="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition flex justify-center items-center">
+                            <span wire:loading.remove wire:target="approve({{ $order->id }})">Setujui Pesanan</span>
+                            <span wire:loading wire:target="approve({{ $order->id }})" class="flex items-center gap-2">
+                                @include('partials.spinner') Memproses...
+                            </span>
+                        </button>
+                    @endif
+                </div>
+            </div>
+        @empty
+            <div class="text-center py-8 text-zinc-500 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                Tidak ada pesanan yang sesuai.
+            </div>
+        @endforelse
+
+        <!-- Pagination Mobile -->
+        <div class="mt-4">
+            {{ $orders->links() }}
+        </div>
     </div>
 </div>

@@ -2,8 +2,7 @@
 
 namespace App\Livewire\Orders;
 
-use App\Models\Order;
-use App\Models\Setting;
+use App\Actions\Orders\PlaceOrderAction;
 use App\Models\Product;
 use Livewire\Component;
 
@@ -14,8 +13,11 @@ class CreateOrder extends Component
     public $searchProduct = '';
     public $searchResults = [];
     public $isConfirmModalOpen = false;
-    public $metodePengiriman = 'ekspedisi';
-    public $biayaPengiriman = 0;
+    public $metode_pengiriman  = 'ekspedisi';
+    public $biaya_pengiriman  = 0;
+    protected $rules = [
+        'metode_pengiriman ' => 'required|in:ekspedisi,ambil_sendiri',
+    ];
 
     public function mount()
     {
@@ -105,49 +107,24 @@ class CreateOrder extends Component
     }
 
     // 2. Fungsi untuk mengeksekusi pesanan (dipanggil dari dalam modal)
-    public function prosesPesanan()
+    public function prosesPesanan(PlaceOrderAction $action)
     {
-        $customer = auth()->user()->customer;
-        $total = $this->getTotalProperty();
-        
-        // Cek PPN dari Setting
-        $ppnEnabled = Setting::get('ppn_enabled', false);
-        $ppnPersen = Setting::get('ppn_persen', 11);
-        $ppn = $ppnEnabled ? $total * ($ppnPersen / 100) : 0;
-        $grandTotal = $total + $ppn;
+        // 1. Buat pesanan via Action
+        $order = $action->execute(
+            auth()->user()->customer,
+            $this->cart,
+            [
+                'metode_pengiriman' => $this->metode_pengiriman,
+                'catatan' => $this->catatan,
+            ]
+        );
 
-        // Buat Order
-        $order = Order::create([
-            'customer_id' => $customer->id,
-            'jalur' => 'self_order',
-            'status' => 'menunggu_approval',
-            'payment_type' => 'transfer',
-            'payment_status' => 'unpaid',
-            'subtotal' => $total,
-            'ppn' => $ppn,
-            'metode_pengiriman' => $this->metodePengiriman,
-            'biaya_pengiriman' => $this->biayaPengiriman,
-            'total' => $grandTotal + $this->biayaPengiriman,
-            'catatan' => $this->catatan,
-        ]);
-
-        // Simpan detail item ke Order Items
-        foreach ($this->cart as $item) {
-            $order->items()->create([
-                'product_id' => $item['id'],
-                'nama_produk' => $item['nama'],
-                'qty' => $item['qty'],
-                'harga' => $item['harga'],
-                'subtotal' => $item['subtotal'],
-            ]);
-        }
-
-        // Kosongkan keranjang setelah checkout berhasil
+        // 2. Bersihkan Keranjang
         session()->forget('cart');
         $this->dispatch('cart-updated'); 
-        $this->isConfirmModalOpen = false; // Tutup modal
+        $this->isConfirmModalOpen = false;
 
-        // Arahkan ke halaman Pesanan Saya dengan Notifikasi
+        // 3. Redirect
         return redirect()->route('orders.my')->with('success', 'Pesanan berhasil dibuat! Menunggu konfirmasi admin.');
     }
 

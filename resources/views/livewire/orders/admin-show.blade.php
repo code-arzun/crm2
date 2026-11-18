@@ -66,8 +66,11 @@
                             </button>
                         @endif
 
-                        <button wire:click="approve" wire:confirm="Setujui pesanan ini?" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition w-full">
-                            Setujui Pesanan
+                        <button wire:click="approve" wire:confirm="Setujui pesanan ini?" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition w-full flex justify-center items-center">
+                            <span wire:loading.remove wire:target="approve">Setujui Pesanan</span>
+                            <span wire:loading wire:target="approve" class="flex items-center gap-2">
+                                @include('partials.spinner') Menyetujui...
+                            </span>
                         </button>
                     </div>
                     @if(in_array($order->status->value, ['menunggu_approval', 'dikonfirmasi', 'diproses']))
@@ -237,7 +240,7 @@
                 <div class="flex justify-between text-sm">
                     <span class="text-zinc-500">Diskon</span>
                     <span class="text-zinc-900 dark:text-white">{{ number_format($order->diskon, 0, ',', '.') }}%</span>
-                    <span class="text-zinc-900 dark:text-white">- Rp {{ number_format($order->diskon * $order->subtotal, 0, ',', '.') }}</span>
+                    <span class="text-zinc-900 dark:text-white">- Rp {{ number_format($order->diskon * $order->subtotal / 100, 0, ',', '.') }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
                     <span class="text-zinc-500">PPN</span>
@@ -298,12 +301,22 @@
                                 <a href="{{ asset('storage/'.$payment->bukti_transfer) }}" target="_blank" class="text-indigo-600 underline">Lihat</a>
                             </td>
                             <td class="py-3 text-sm">
-                                @if($payment->status->value === 'pending')
-                                    <span class="text-amber-600 font-bold">Pending</span>
-                                @elseif($payment->status->value === 'verified')
-                                    <span class="text-green-600 font-bold">Verified</span>
+                               @if($payment->status->value === 'pending')
+                                    <button wire:click="verifyPayment({{ $payment->id }})" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-bold transition shadow-sm mr-1 flex justify-center items-center min-w-[80px]">
+                                        <span wire:loading.remove wire:target="verifyPayment({{ $payment->id }})">Verifikasi</span>
+                                        <span wire:loading wire:target="verifyPayment({{ $payment->id }})" class="flex items-center gap-1">
+                                            @include('partials.spinner')
+                                        </span>
+                                    </button>
+                                    
+                                    <button x-data x-on:click.prevent="if(confirm('Tolak pembayaran ini?')) $wire.rejectPayment({{ $payment->id }})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-bold transition shadow-sm flex justify-center items-center min-w-[60px]">
+                                        <span wire:loading.remove wire:target="rejectPayment({{ $payment->id }})">Tolak</span>
+                                        <span wire:loading wire:target="rejectPayment({{ $payment->id }})" class="flex items-center gap-1">
+                                            @include('partials.spinner')
+                                        </span>
+                                    </button>
                                 @else
-                                    <span class="text-red-600 font-bold">Rejected</span>
+                                    <span class="text-xs text-zinc-400 italic">Selesai</span>
                                 @endif
                             </td>
                             <td class="py-3 text-sm">{{ $payment->verifier->name ?? '-' }}</td>
@@ -544,7 +557,12 @@
 
                     <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-700">
                         <button type="button" wire:click="$set('isDiskonModalOpen', false)" class="px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Batal</button>
-                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm">Terapkan Diskon</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm flex items-center justify-center">
+                            <span wire:loading.remove wire:target="simpanDiskon">Terapkan Diskon</span>
+                            <span wire:loading wire:target="simpanDiskon" class="flex items-center gap-2">
+                                @include('partials.spinner') Menyimpan...
+                            </span>
+                        </button>
                     </div>
                 </form>
             </div>

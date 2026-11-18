@@ -2,10 +2,11 @@
 
 namespace App\Livewire\Returns;
 
+use App\Actions\Returns\ApproveReturnAction;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\ReturnOrder;
 use App\Models\StockMovement;
-use App\Models\Customer;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -35,7 +36,7 @@ class Index extends Component
     public function updatingSearch() { $this->resetPage(); }
     public function updatingFilterStatus() { $this->resetPage(); }
 
-        public function openModal($id)
+    public function openModal($id)
     {
         // Load relasi items dan orderItem
         $this->selectedReturn = ReturnOrder::with(['order.customer', 'items.orderItem.product'])->findOrFail($id);
@@ -57,37 +58,21 @@ class Index extends Component
         $this->dispatch('notify', message: 'Pengajuan retur ditolak.');
     }
 
-    public function setujuiRetur()
+    public function setujuiRetur(ApproveReturnAction $action)
     {
-        $return = $this->selectedReturn;
+        $refundProofPath = null;
         
-        // Hitung nominal refund dari semua item yang diretur
-        $nilaiBarang = 0;
-        foreach ($return->items as $retItem) {
-            $nilaiBarang += ($retItem->orderItem->harga * $retItem->qty);
+        // Handle upload file di sini (Livewire)
+        if ($this->refund_method === 'transfer' && $this->refund_proof) {
+            $refundProofPath = $this->refund_proof->store('refund-proofs', 'public');
         }
 
-        $nominalRefund = max(0, $nilaiBarang - $this->biaya_retur);
-
-        // 1. Update status retur menjadi 'disetujui'
-        $return->update([
-            'status' => 'disetujui',
-            'approved_by' => auth()->id(),
-            'refund_amount' => $nominalRefund,
-            'refund_method' => $this->refund_method,
+        // Panggil Action
+        $action->execute($this->selectedReturn, auth()->user(), [
             'biaya_retur' => $this->biaya_retur,
+            'refund_method' => $this->refund_method,
+            'refund_proof_path' => $refundProofPath,
         ]);
-
-        // 2. Proses Refund
-        if ($this->refund_method === 'saldo') {
-            $customer = $return->order->customer;
-            $customer->increment('credit_balance', $nominalRefund);
-        } else {
-            if ($this->refund_proof) {
-                $path = $this->refund_proof->store('refund-proofs', 'public');
-                $return->update(['refund_proof' => $path]);
-            }
-        }
 
         $this->isModalOpen = false;
         $this->dispatch('notify', message: 'Retur disetujui. Menunggu barang diterima Gudang.');

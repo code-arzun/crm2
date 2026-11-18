@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Returns;
 
+use App\Actions\Returns\ReceiveReturnAction;
 use App\Models\ReturnOrder;
-use App\Models\StockMovement;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -24,33 +24,16 @@ class ReceiveIndex extends Component
     public function updatingSearch() { $this->resetPage(); }
     public function updatingFilterStatus() { $this->resetPage(); }
 
-    public function terimaBarang($id)
+    public function terimaBarang($id, ReceiveReturnAction $action)
     {
         $return = ReturnOrder::with('items.orderItem.product')->findOrFail($id);
         
-        if ($return->status->value !== 'disetujui') return;
-
-        // 1. Update status retur menjadi selesai
-        $return->update(['status' => 'selesai']);
-
-        // 2. Loop semua item dan kembalikan stoknya
-        foreach ($return->items as $retItem) {
-            $product = $retItem->orderItem->product;
-            if ($product && $product->tipe->value === 'barang') {
-                $product->increment('stok', $retItem->qty);
-                
-                StockMovement::create([
-                    'product_id' => $product->id,
-                    'tipe' => 'return',
-                    'qty' => $retItem->qty,
-                    'referensi' => $return->order->kode_order,
-                    'keterangan' => 'Retur barang diterima gudang',
-                    'user_id' => auth()->id(),
-                ]);
-            }
+        try {
+            $action->execute($return, auth()->id());
+            $this->dispatch('notify', message: 'Barang retur diterima & stok diperbarui.');
+        } catch (\Exception $e) {
+            $this->dispatch('notify', message: $e->getMessage());
         }
-
-        $this->dispatch('notify', message: 'Barang retur diterima & stok diperbarui.');
     }
 
     // Properti untuk Modal Detail

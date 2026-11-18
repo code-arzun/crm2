@@ -12,7 +12,7 @@
 
                 <div class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Detail Pengajuan Retur</div>
                 <h1 class="text-xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
-                    RETUR-{{ str_pad($return->id, 5, '0', STR_PAD_LEFT) }}
+                    {{ $return->kode_retur }}
                 </h1>
                 <div class="text-sm text-zinc-500">
                     Diajukan pada: <strong>{{ $return->created_at->format('d M Y H:i') }}</strong>

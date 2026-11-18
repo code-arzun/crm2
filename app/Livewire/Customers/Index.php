@@ -2,15 +2,19 @@
 
 namespace App\Livewire\Customers;
 
+use App\Exports\CustomerTemplateExport;
+use App\Imports\CustomersImport;
 use App\Models\Customer;
 use App\Models\CustomerTier;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\WithFileUploads;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Index extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     public $search = '';
     
@@ -120,5 +124,38 @@ class Index extends Component
         $this->nama_perusahaan = '';
         $this->alamat = '';
         $this->tier_id = '';
+    }
+
+    // Properti Import
+    public $isImportModalOpen = false;
+    public $file_excel;
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new CustomerTemplateExport, 'Template_Import_Customer.xlsx');
+    }
+
+    public function import()
+    {
+        $this->validate([
+            'file_excel' => 'required|mimes:xlsx,xls,csv|max:5120',
+        ]);
+
+        try {
+            Excel::import(new CustomersImport, $this->file_excel->getRealPath());
+            
+            $this->isImportModalOpen = false;
+            $this->reset('file_excel');
+            $this->dispatch('notify', message: 'Data customer berhasil diimport!');
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = $e->failures();
+            $errorMessages = [];
+            foreach ($failures as $failure) {
+                $errorMessages[] = "Baris {$failure->row()}: " . implode(', ', $failure->errors());
+            }
+            $this->addError('file_excel', 'Gagal import. ' . implode(' | ', array_slice($errorMessages, 0, 3)));
+        } catch (\Exception $e) {
+            $this->addError('file_excel', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+        }
     }
 }

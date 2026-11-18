@@ -37,16 +37,18 @@
         </div>
     </div>
 
-    <!-- TABEL -->
-    <div class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm">
+        <!-- ========================================== -->
+    <!-- TAMPILAN DESKTOP (TABEL) -->
+    <!-- ========================================== -->
+    <div class="hidden md:block bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-500 dark:text-zinc-400">
                         <th class="px-6 py-4">No. Order & Tanggal</th>
                         <th class="px-6 py-4">Customer</th>
-                        <th class="px-6 py-4">Status</th>
-                        <th class="px-6 py-4 text-center">Pengiriman ke-</th>
+                        <th class="px-6 py-4 text-center">Status Pengiriman</th>
+                        <th class="px-6 py-4 text-center">Pengiriman Ke-</th>
                         <th class="px-6 py-4 text-right">Aksi</th>
                     </tr>
                 </thead>
@@ -54,37 +56,24 @@
                     @forelse ($orders as $order)
                         @php
                             $totalPesan = $order->items->sum('qty');
-                            
-                            $totalDalamPengiriman = $order->shipments
-                                ->filter(fn($s) => $s->status->value === 'dikirim')
-                                ->flatMap->items
-                                ->sum('qty_dikirim');
-
-                            $totalDiterima = $order->shipments
-                                ->filter(fn($s) => $s->status->value === 'diterima')
-                                ->flatMap->items
-                                ->sum('qty_dikirim');
-
+                            $totalDalamPengiriman = $order->shipments->filter(fn($s) => $s->status->value === 'dikirim')->flatMap->items->sum('qty_dikirim');
+                            $totalDiterima = $order->shipments->filter(fn($s) => $s->status->value === 'diterima')->flatMap->items->sum('qty_dikirim');
                             $sisaBelumKirim = $totalPesan - $totalDalamPengiriman - $totalDiterima;
-                            
-                            // KUNCI PERBAIKAN: Cek status 'diterima'
                             $isSelesai = ($totalDiterima >= $totalPesan && $totalPesan > 0);
                         @endphp
-
-                        <tr onclick="window.location='{{ route('admin.orders.show', $order->id) }}'" class="hover:bg-indigo-50/50 dark:hover:bg-zinc-700/50 transition cursor-pointer">
-                            
+                        <tr x-data="{ expanded: false }" class="hover:bg-indigo-50/50 transition">
                             <td class="px-6 py-4">
-                                <div class="font-mono font-medium text-indigo-600 dark:text-indigo-400">{{ $order->kode_order }}</div>
-                                <div class="text-xs text-zinc-500">{{ $order->created_at->format('d M Y H:i') }}</div>
+                                <button @click="expanded = !expanded" class="text-zinc-400 hover:text-indigo-600 mr-2 focus:outline-none">
+                                    <svg :class="{'rotate-180': expanded}" class="w-5 h-5 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                </button>
+                                <span class="font-mono font-medium text-indigo-600 dark:text-indigo-400">{{ $order->kode_order }}</span>
+                                <div class="text-xs text-zinc-500 ml-7">{{ $order->created_at->format('d M Y H:i') }}</div>
                             </td>
-                            
                             <td class="px-6 py-4">
                                 <div class="font-medium text-zinc-900 dark:text-white">{{ $order->customer->nama_lengkap }}</div>
                                 <div class="text-xs text-zinc-500">{{ $order->customer->alamat ?? '-' }}</div>
                             </td>
-                            
-                            <!-- STATUS PENGIRIMAN (3 TAHAP) -->
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 text-center">
                                 @if($isSelesai)
                                     <span class="px-2.5 py-1 text-xs font-bold bg-green-100 text-green-800 rounded-full border border-green-200">Terkirim Semua</span>
                                 @elseif($totalDalamPengiriman > 0 && $sisaBelumKirim == 0)
@@ -95,37 +84,71 @@
                                     <span class="px-2.5 py-1 text-xs font-bold bg-red-100 text-red-800 rounded-full border border-red-200">Belum Dikirim</span>
                                 @endif
                             </td>
-
                             <td class="px-6 py-4 text-center">
                                 @if($order->shipments->count() > 0)
                                     <span class="font-bold text-zinc-900 dark:text-white">{{ $order->shipments->count() }}</span>
+                                    <span class="text-xs text-zinc-500">/ kali</span>
                                 @else
                                     <span class="text-zinc-400">-</span>
                                 @endif
                             </td>
-                            
                             <td class="px-6 py-4 text-right">
-                                <!-- TOMBOL BARU: Edit Resi (Hanya muncul jika sudah pernah dikirim) -->
                                 @if($order->shipments->count() > 0)
                                     @php $lastShipment = $order->shipments->sortByDesc('id')->first(); @endphp
-                                    <button onclick="event.stopPropagation(); @this.openEditResiModal({{ $lastShipment->id }})" class="bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 px-3 py-1.5 rounded text-sm font-bold shadow-sm transition mr-2">
-                                        Edit Resi
-                                    </button>
+                                    <button onclick="event.stopPropagation(); @this.openEditResiModal({{ $lastShipment->id }})" class="bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 px-3 py-1.5 rounded text-sm font-bold shadow-sm transition mr-2">Edit Resi</button>
                                 @endif
-
-                                <!-- Tombol Proses Kirim (Jika belum selesai) -->
                                 @if(!$isSelesai)
-                                    <button onclick="event.stopPropagation(); @this.openShipModal({{ $order->id }})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm font-bold shadow-sm transition">
-                                        Proses Kirim
-                                    </button>
+                                    <button onclick="event.stopPropagation(); @this.openShipModal({{ $order->id }})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm font-bold shadow-sm transition">Proses Kirim</button>
+                                @endif
+                            </td>
+                        </tr>
+                        
+                        <!-- Accordion (Desktop) -->
+                        <tr x-show="expanded" x-collapse style="display: none;" class="bg-zinc-50/50 dark:bg-zinc-900/20">
+                            <td colspan="5" class="px-6 py-4 border-l-4 border-indigo-500">
+                                <!-- ... (kode tabel riwayat pengiriman) ... -->
+                                <h4 class="font-bold text-sm text-zinc-700 dark:text-zinc-300 mb-3">Riwayat Pengiriman</h4>
+                                @if($order->shipments->count() > 0)
+                                    <table class="w-full text-left bg-white dark:bg-zinc-800 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700">
+                                        <thead>
+                                            <tr class="bg-zinc-100 dark:bg-zinc-900/50 text-xs text-zinc-500">
+                                                <th class="px-4 py-2">Ekspedisi / Resi</th>
+                                                <th class="px-4 py-2">Tgl Kirim</th>
+                                                <th class="px-4 py-2">Status</th>
+                                                <th class="px-4 py-2 text-right">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($order->shipments as $shipment)
+                                                <tr class="border-t border-zinc-100 dark:border-zinc-700/50">
+                                                    <td class="px-4 py-2 text-sm">
+                                                        <div class="font-bold text-zinc-900 dark:text-white">{{ $shipment->ekspedisi }}</div>
+                                                        <div class="text-xs text-indigo-600 font-mono">{{ $shipment->no_resi ?? 'Tanpa Resi' }}</div>
+                                                    </td>
+                                                    <td class="px-4 py-2 text-sm text-zinc-600">{{ $shipment->shipped_at ? $shipment->shipped_at->format('d M Y') : '-' }}</td>
+                                                    <td class="px-4 py-2 text-sm">
+                                                        @if($shipment->status->value === 'diterima')
+                                                            <span class="text-green-600 font-bold">Diterima</span>
+                                                        @else
+                                                            <span class="text-blue-600 font-bold">Di Jalan</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-4 py-2 text-right">
+                                                        <button wire:click="openEditResiModal({{ $shipment->id }})" class="text-amber-600 hover:text-amber-800 text-xs font-bold mr-2">Edit Resi</button>
+                                                        <a href="{{ route('surat-jalan.download', $shipment->id) }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 text-xs font-bold">Lihat SJ</a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                @else
+                                    <p class="text-sm text-zinc-500">Belum ada pengiriman.</p>
                                 @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-10 text-center text-zinc-500 dark:text-zinc-400">
-                                Tidak ada data pengiriman sesuai filter.
-                            </td>
+                            <td colspan="5" class="px-6 py-10 text-center text-zinc-500 dark:text-zinc-400">Tidak ada data pengiriman sesuai filter.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -134,6 +157,77 @@
         @if($orders->hasPages())
             <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">{{ $orders->links() }}</div>
         @endif
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAMPILAN MOBILE (CARD) -->
+    <!-- ========================================== -->
+    <div class="md:hidden space-y-4">
+        @forelse ($orders as $order)
+            @php
+                $totalPesan = $order->items->sum('qty');
+                $totalDalamPengiriman = $order->shipments->filter(fn($s) => $s->status->value === 'dikirim')->flatMap->items->sum('qty_dikirim');
+                $totalDiterima = $order->shipments->filter(fn($s) => $s->status->value === 'diterima')->flatMap->items->sum('qty_dikirim');
+                $sisaBelumKirim = $totalPesan - $totalDalamPengiriman - $totalDiterima;
+                $isSelesai = ($totalDiterima >= $totalPesan && $totalPesan > 0);
+            @endphp
+            <div x-data="{ expanded: false }" class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 shadow-sm">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <div class="font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ $order->kode_order }}</div>
+                        <div class="text-xs text-zinc-500">{{ $order->created_at->format('d M Y') }}</div>
+                    </div>
+                    @if($isSelesai)
+                        <span class="px-2.5 py-1 text-[10px] font-bold bg-green-100 text-green-800 rounded-full border border-green-200">Terkirim Semua</span>
+                    @elseif($totalDalamPengiriman > 0 && $sisaBelumKirim == 0)
+                        <span class="px-2.5 py-1 text-[10px] font-bold bg-blue-100 text-blue-800 rounded-full border border-blue-200">Dalam Pengiriman</span>
+                    @elseif($totalDalamPengiriman > 0 || $totalDiterima > 0)
+                        <span class="px-2.5 py-1 text-[10px] font-bold bg-amber-100 text-amber-800 rounded-full border border-amber-200">Dikirim Sebagian</span>
+                    @else
+                        <span class="px-2.5 py-1 text-[10px] font-bold bg-red-100 text-red-800 rounded-full border border-red-200">Belum Dikirim</span>
+                    @endif
+                </div>
+                <div class="border-t border-zinc-100 dark:border-zinc-700/50 pt-2 mt-2">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-zinc-500">Customer:</span>
+                        <span class="font-medium text-zinc-900 dark:text-white">{{ $order->customer->nama_lengkap }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-3">
+                        <span class="text-zinc-500">Pengiriman Ke-:</span>
+                        <span class="font-bold text-zinc-900 dark:text-white">{{ $order->shipments->count() }} kali</span>
+                    </div>
+                    <div class="flex gap-2">
+                        @if(!$isSelesai)
+                            <button onclick="event.stopPropagation(); @this.openShipModal({{ $order->id }})" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition text-center">Proses Kirim</button>
+                        @endif
+                        <button @click="expanded = !expanded" class="flex-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border border-zinc-300 px-3 py-2 rounded-lg text-sm font-bold shadow-sm transition text-center">Riwayat</button>
+                    </div>
+                </div>
+                <!-- Accordion Mobile -->
+                <div x-show="expanded" x-collapse style="display: none;" class="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-700/50">
+                    @if($order->shipments->count() > 0)
+                        @foreach($order->shipments as $shipment)
+                            <div class="flex justify-between items-center py-1">
+                                <div class="text-sm">
+                                    <div class="font-bold text-zinc-900 dark:text-white">{{ $shipment->ekspedisi }}</div>
+                                    <div class="text-xs text-indigo-600">{{ $shipment->no_resi ?? 'Tanpa Resi' }}</div>
+                                </div>
+                                <button wire:click="openEditResiModal({{ $shipment->id }})" class="text-xs text-amber-600 font-bold">Edit</button>
+                            </div>
+                        @endforeach
+                    @else
+                        <p class="text-xs text-zinc-500">Belum ada pengiriman.</p>
+                    @endif
+                </div>
+            </div>
+        @empty
+            <div class="text-center py-8 text-zinc-500 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                Tidak ada data pengiriman sesuai filter.
+            </div>
+        @endforelse
+        <div class="mt-4">
+            {{ $orders->links() }}
+        </div>
     </div>
 
     <!-- MODAL PENGIRIMAN -->
@@ -186,13 +280,13 @@
                             <button type="button" wire:click="$set('isShipModalOpen', false)" class="px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Batal</button>
                             <button type="submit" 
                                     x-data 
-                                    x-on:click.prevent="
-                                        if (confirm('Apakah Anda yakin ingin memproses pengiriman ini? Stok akan otomatis berkurang.')) {
-                                            $wire.processShipment();
-                                        }
-                                    " 
-                                    class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm">
-                                Konfirmasi Pengiriman
+                                    x-on:click.prevent="if (confirm('Apakah Anda yakin ingin memproses pengiriman ini? Stok akan otomatis berkurang.')) { $wire.processShipment(); }" 
+                                    class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm flex items-center justify-center min-w-[150px]">
+                                
+                                <span wire:loading.remove wire:target="processShipment">Konfirmasi Pengiriman</span>
+                                <span wire:loading wire:target="processShipment" class="flex items-center gap-2">
+                                    @include('partials.spinner') Memproses...
+                                </span>
                             </button>
                         </div>
                     </form>

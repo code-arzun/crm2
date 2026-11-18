@@ -41,25 +41,41 @@
                                 <div class="font-mono font-medium text-indigo-600">{{ $return->kode_retur }}</div>
                                 <div class="text-xs text-zinc-500">{{ $return->order->customer->nama_lengkap }}</div>
                             </td>
+                            <td class="px-6 py-4 text-sm">
+                                {{ $return->items->first()->orderItem->product->nama ?? '-' }} 
+                                @if($return->items->count() > 1)
+                                    <span class="text-xs text-zinc-500">(+{{ $return->items->count() - 1 }} lainnya)</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4 text-center font-bold">{{ $return->total_qty_diretur }}</td>
                             <td class="px-6 py-4 text-sm">
                                 <span class="capitalize">{{ str_replace('_', ' ', $return->items->first()->alasan_retur ?? '-') }}</span>
                             </td>
                             <td class="px-6 py-4">
                                 @if($return->status->value === 'diajukan')
-                                    <span class="px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-800 rounded-full border border-amber-200">Menunggu Persetujuan</span>
+                                    <span class="px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-800 rounded-full border border-amber-200">Menunggu</span>
+                                @elseif($return->status->value === 'selesai')
+                                    <span class="px-2.5 py-1 text-xs font-bold bg-green-100 text-green-800 rounded-full border border-green-200">Selesai</span>
                                 @elseif($return->status->value === 'disetujui')
-                                    <span class="px-2.5 py-1 text-xs font-bold bg-green-100 text-green-800 rounded-full border border-green-200">Disetujui</span>
+                                    <span class="px-2.5 py-1 text-xs font-bold bg-blue-100 text-blue-800 rounded-full border border-blue-200">Diproses</span>
                                 @else
                                     <span class="px-2.5 py-1 text-xs font-bold bg-red-100 text-red-800 rounded-full border border-red-200">Ditolak</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                @if($return->status->value === 'diajukan')
+                                    <!-- TOMBOL PROSES (MEMBUKA MODAL) -->
+                                    <button onclick="event.stopPropagation(); @this.openModal({{ $return->id }})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm font-bold shadow-sm transition flex justify-center items-center min-w-[80px]">
+                                        Proses
+                                    </button>
+                                @else
+                                    <span class="text-xs text-zinc-400 italic">Lihat Detail &rarr;</span>
                                 @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-10 text-center text-zinc-500 dark:text-zinc-400">
-                                <p class="text-sm text-zinc-500 text-center py-4">Belum ada pengajuan retur.</p>
-                            </td>
+                            <td colspan="6" class="px-6 py-10 text-center text-zinc-500">Tidak ada pengajuan retur.</td>
                         </tr>
                     @endforelse
                 </tbody>

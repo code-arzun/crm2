@@ -14,10 +14,15 @@
             <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Kelola data pelanggan Anda di sini.</p>
         </div>
         
-        <!-- Tombol Tambah -->
-        <button wire:click="create" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
-            + Tambah Customer
-        </button>
+        <div class="flex gap-2">
+            <button wire:click="$set('isImportModalOpen', true)" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                Import Excel
+            </button>
+            <button wire:click="create" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-sm">
+                + Tambah Customer
+            </button>
+        </div>
     </div>
 
     <!-- Kotak Pencarian -->
@@ -163,6 +168,49 @@
         >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
             <span x-text="message" class="font-medium"></span>
-        </div>
     </div>
+    {{-- </div> --}}
+
+    <!-- MODAL IMPORT EXCEL -->
+    @if($isImportModalOpen)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm p-4">
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white">Import Customer dari Excel</h3>
+                    <button wire:click="$set('isImportModalOpen', false)" class="text-zinc-400 hover:text-zinc-600 text-2xl">&times;</button>
+                </div>
+                
+                <form wire:submit="import" class="p-6 space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                        <p class="text-sm text-blue-800 font-medium mb-2">Langkah-langkah:</p>
+                        <ol class="text-xs text-blue-700 list-decimal list-inside space-y-1 mb-3">
+                            <li>Unduh template Excel di bawah ini.</li>
+                            <li>Isi data customer sesuai kolom.</li>
+                            <li>Simpan file, lalu unggah kembali di sini.</li>
+                        </ol>
+                        <button type="button" wire:click="downloadTemplate" class="w-full bg-white border border-blue-300 text-blue-700 px-3 py-2 rounded text-sm font-bold hover:bg-blue-50 transition flex justify-center items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download Template Excel
+                        </button>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Upload File Excel</label>
+                        <input type="file" wire:model="file_excel" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" accept=".xlsx, .xls, .csv">
+                        @error('file_excel') <span class="text-red-500 text-xs block mt-2">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                        <button type="button" wire:click="$set('isImportModalOpen', false)" class="px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg">Batal</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm flex items-center justify-center">
+                            <span wire:loading.remove wire:target="import">Mulai Import</span>
+                            <span wire:loading wire:target="import" class="flex items-center gap-2">
+                                @include('partials.spinner') Memproses...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 </div>

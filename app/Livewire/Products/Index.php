@@ -2,15 +2,20 @@
 
 namespace App\Livewire\Products;
 
+use App\Exports\ProductTemplateExport;
+use App\Imports\ProductsImport;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Index extends Component
 {
     use WithPagination;
+    use WithFileUploads;
 
     public $search = '';
     public $isModalOpen = false;
@@ -115,5 +120,39 @@ class Index extends Component
         $this->stok = 0;
         $this->satuan = 'pcs';
         $this->deskripsi = '';
+    }
+
+    public $isImportModalOpen = false;
+    public $file_excel;
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new ProductTemplateExport, 'Template_Import_Produk.xlsx');
+    }
+
+    public function import()
+    {
+        $this->validate([
+            'file_excel' => 'required|mimes:xlsx,xls,csv|max:5120', // Maks 5MB
+        ]);
+
+        try {
+            Excel::import(new ProductsImport, $this->file_excel->getRealPath());
+            
+            $this->isImportModalOpen = false;
+            $this->reset('file_excel');
+            $this->dispatch('notify', message: 'Data produk berhasil diimport!');
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = $e->failures();
+            $errorMessages = [];
+            foreach ($failures as $failure) {
+                $errorMessages[] = "Baris {$failure->row()}: " . implode(', ', $failure->errors());
+            }
+            
+            // Tampilkan error validasi
+            $this->addError('file_excel', 'Gagal import. ' . implode(' | ', array_slice($errorMessages, 0, 3))); // Tampilkan maks 3 error
+        } catch (\Exception $e) {
+            $this->addError('file_excel', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+        }
     }
 }

@@ -85,7 +85,7 @@ class Show extends Component
         $this->dispatch('notify', message: 'Status pengiriman diperbarui menjadi Diterima.');
     }
 
-        public $isReturModalOpen = false;
+    public $isReturModalOpen = false;
     public $retur_qty = [];
     public $retur_alasan = '';
     public $retur_kategori = 'rusak';

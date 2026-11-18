@@ -11,43 +11,45 @@
                 wire:model.live.debounce.300ms="search"
                 type="text" 
                 placeholder="Cari nama atau kode produk..." 
-                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                class="w-full px-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
         </div>
     </div>
 
-    <!-- Grid Produk -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <!-- Grid Produk (1 kolom di HP kecil, 2 di HP sedang, dst) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
         @forelse($products as $product)
             <div class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition">
                 
                 <!-- Tempat Gambar (Placeholder) -->
-                <div class="h-40 bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center">
+                <div class="h-32 md:h-40 bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center">
                     <span class="text-zinc-400 text-sm">Gambar Belum Tersedia</span>
                 </div>
 
                 <div class="p-4 flex-1 flex flex-col">
                     <div class="text-xs text-zinc-500 mb-1">{{ $product->kode }}</div>
-                    <h3 class="font-bold text-zinc-900 dark:text-white leading-tight mb-2 line-clamp-2">{{ $product->nama }}</h3>
+                    <h3 class="font-bold text-zinc-900 dark:text-white leading-tight mb-2 line-clamp-2 text-sm md:text-base">{{ $product->nama }}</h3>
                     
-                    <div class="text-lg font-bold text-indigo-600 dark:text-indigo-400 mt-auto">
-                        {{-- Rp {{ number_format($product->harga_default, 0, ',', '.') }} --}}
+                    <div class="text-base md:text-lg font-bold text-indigo-600 dark:text-indigo-400 mt-auto">
                         Rp {{ number_format($product->hargaUntukCustomer($this->customer), 0, ',', '.') }}
                     </div>
                     
-                    {{-- <div class="text-xs mt-1 mb-4 
+                    <div class="text-xs mt-1 mb-3 
                         @if($product->tipe->value === 'jasa') text-purple-600 @elseif($product->stok > 0) text-green-600 @else text-red-600 @endif">
                         @if($product->tipe->value === 'jasa')
                             Jasa / Layanan
                         @else
                             Stok: {{ $product->stok }} {{ $product->satuan }}
                         @endif
-                    </div> --}}
+                    </div>
 
                     <!-- Tombol Keranjang -->
                     <div class="mt-auto">
-                        <button wire:click="addToCart({{ $product->id }})" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
-                            + Keranjang
+                        <button wire:click="addToCart({{ $product->id }})" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition flex justify-center items-center">
+                            <span wire:loading.remove wire:target="addToCart({{ $product->id }})">+ Keranjang</span>
+                            <span wire:loading wire:target="addToCart({{ $product->id }})" class="flex items-center gap-2">
+                                @include('partials.spinner') Menambah...
+                            </span>
                         </button>
                         
                         <!-- Teks info jumlah di keranjang -->

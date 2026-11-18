@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Warehouse;
 
+use App\Actions\Shipping\ProcessShipmentAction;
+use App\Actions\Shipping\UpdateResiAction;
 use App\Models\Order;
-use App\Models\Shipment;
-use App\Models\StockMovement;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -58,75 +58,24 @@ class Shipments extends Component
         $this->isShipModalOpen = true;
     }
 
-    public function processShipment()
+    public function processShipment(ProcessShipmentAction $action)
     {
-        $order = $this->selectedOrder;
-        
-        if (!$order) return;
+        if (!$this->selectedOrder) return;
 
-        // 1. Buat data Shipment
-        $shipment = Shipment::create([
-            'order_id' => $order->id,
-            'user_id' => auth()->id(),
-            'ekspedisi' => $this->ekspedisi,
-            'no_resi' => $this->no_resi,
-            'alamat_kirim' => $order->customer->alamat ?? 'Alamat belum diisi',
-            'status' => 'dikirim',
-            'shipped_at' => now(),
-        ]);
+        try {
+            // Panggil Action Class
+            $action->execute($this->selectedOrder, [
+                'ekspedisi' => $this->ekspedisi,
+                'no_resi' => $this->no_resi,
+                'qty_kirim' => $this->qty_kirim,
+            ], auth()->id());
 
-        $adaYangDikirim = false;
+            $this->isShipModalOpen = false;
+            $this->dispatch('notify', message: 'Pengiriman berhasil diproses.');
 
-        // 2. Loop item yang dikirim
-        foreach ($order->items as $item) {
-            $qtyKirim = (int) ($this->qty_kirim[$item->id] ?? 0);
-            
-            if ($qtyKirim > 0) {
-                $adaYangDikirim = true;
-                
-                $shipment->items()->create([
-                    'order_item_id' => $item->id,
-                    'qty_dikirim' => $qtyKirim,
-                ]);
-
-                $item->increment('qty_terkirim', $qtyKirim);
-
-                // POTONG STOK FISIK
-                $product = $item->product;
-                if ($product && $product->tipe->value === 'barang') {
-                    $product->decrement('stok', $qtyKirim);
-
-                    StockMovement::create([
-                        'product_id' => $product->id,
-                        'tipe' => 'out',
-                        'qty' => $qtyKirim,
-                        'referensi' => $order->kode_order,
-                        'keterangan' => 'Pengiriman barang (Resi: ' . $this->no_resi . ')',
-                        'user_id' => auth()->id(),
-                    ]);
-                }
-            }
+        } catch (\Exception $e) {
+            $this->addError('qty_kirim', $e->getMessage());
         }
-
-        if (!$adaYangDikirim) {
-            $this->addError('qty_kirim', 'Tidak ada barang yang dipilih untuk dikirim.');
-            return;
-        }
-
-        // 3. Update Status Order
-        $order->refresh();
-        $semuaTerkirim = $order->items->every(fn($i) => $i->qty_terkirim >= $i->qty);
-        
-        if ($semuaTerkirim) {
-            $order->update(['status' => 'dikirim']);
-        } else {
-            $order->update(['status' => 'diproses']); 
-        }
-
-        $order->refresh()->cekSelesai();
-
-        $this->isShipModalOpen = false;
-        $this->dispatch('notify', message: 'Pengiriman berhasil diproses.');
     }
 
     public function render()
@@ -191,17 +140,14 @@ class Shipments extends Component
         $this->isEditResiModalOpen = true;
     }
 
-    public function updateResi()
+    public function updateResi(UpdateResiAction $action)
     {
         $this->validate([
             'edit_ekspedisi' => 'required|string|max:50',
             'edit_no_resi' => 'required|string|max:100',
         ]);
 
-        $this->shipmentToEdit->update([
-            'ekspedisi' => $this->edit_ekspedisi,
-            'no_resi' => $this->edit_no_resi,
-        ]);
+        $action->execute($this->shipmentToEdit, $this->edit_ekspedisi, $this->edit_no_resi);
 
         $this->isEditResiModalOpen = false;
         $this->dispatch('notify', message: 'Data resi berhasil diperbarui.');

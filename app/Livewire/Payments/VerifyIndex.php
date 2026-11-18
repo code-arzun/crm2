@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Payments;
 
+use App\Actions\Payments\VerifyPaymentAction;
 use App\Exports\PaymentsExport;
 use App\Models\Order;
 use App\Models\Payment;
@@ -43,11 +44,10 @@ class VerifyIndex extends Component
         $this->isPayModalOpen = true;
     }
 
-    public function verify($paymentId)
+    public function verify($paymentId, VerifyPaymentAction $action)
     {
         $payment = Payment::findOrFail($paymentId);
-        $payment->verify(auth()->user());
-        $payment->order->refresh()->cekSelesai();
+        $action->execute($payment, auth()->user());
         
         $this->isPayModalOpen = false;
         $this->selectedOrder = null;
