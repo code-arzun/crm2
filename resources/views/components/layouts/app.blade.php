@@ -7,28 +7,36 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="min-h-screen bg-zinc-50 dark:bg-zinc-900 flex">
+<body class="min-h-screen bg-zinc-50 dark:bg-zinc-900 flex overflow-hidden" x-data="{ sidebarOpen: false }">
     
+    <!-- OVERLAY GELAP (Saat Sidebar Terbuka di HP) -->
+    <div x-show="sidebarOpen" 
+         x-transition.opacity 
+         @click="sidebarOpen = false" 
+         class="fixed inset-0 bg-zinc-900/50 z-40 md:hidden backdrop-blur-sm" 
+         style="display: none;"></div>
+
     <!-- SIDEBAR -->
-    <aside class="w-64 bg-white dark:bg-zinc-800 border-r border-zinc-200 dark:border-zinc-700 hidden md:flex flex-col">
-        <!-- Logo -->
-        <div class="h-16 flex items-center px-6 border-b border-zinc-200 dark:border-zinc-700">
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" 
+           class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-zinc-800 border-r border-zinc-200 dark:border-zinc-700 flex flex-col transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0">
+        
+        <!-- Logo & Tombol Close (di HP) -->
+        <div class="h-16 flex items-center justify-between px-6 border-b border-zinc-200 dark:border-zinc-700">
             <span class="text-xl font-bold text-zinc-900 dark:text-white">CRM System</span>
+            <button @click="sidebarOpen = false" class="md:hidden text-zinc-500 hover:text-red-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
         </div>
 
-                <!-- Menu -->
+        <!-- Menu -->
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
-            
-             @role('superadmin|admin|sales|finance|warehouse')
             <a href="{{ route('dashboard') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('dashboard') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                 Dashboard
             </a>
-            @endrole
 
             <!-- MENU KHUSUS ADMIN & SUPERADMIN -->
             @role('superadmin|admin')
                 <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Manajemen</div>
-                
                 <a href="{{ route('admin.orders') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.orders') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                     Semua Pesanan
                 </a>
@@ -40,22 +48,14 @@
                 </a>
             @endrole
 
-            <!-- MENU KHUSUS SALES -->
-            @role('superadmin|admin|sales')
-                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Penjualan</div>
-                <a href="{{ route('admin.orders') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('sales.orders') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                    Pesanan
-                </a>
-            @endrole
-
             <!-- MENU KHUSUS FINANCE -->
             @role('superadmin|admin|finance')
                 <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Keuangan</div>
                 <a href="{{ route('payments.verify') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('payments.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                    Verifikasi Pembayaran
+                    Pembayaran
                 </a>
                 <a href="{{ route('returns.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('returns.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                    Returns / Pengembalian
+                    Manajemen Retur
                 </a>
             @endrole
 
@@ -65,7 +65,6 @@
                 <a href="{{ route('warehouse.shipments') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('warehouse.shipments') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                     Pengiriman
                 </a>
-                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Stok</div>
                 <a href="{{ route('warehouse.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('warehouse.index') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                     Stok Gudang
                 </a>
@@ -73,16 +72,16 @@
                     Riwayat Stok
                 </a>
                 <a href="{{ route('returns.receive') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('returns.receive') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                    Retur
+                    Penerimaan Retur
                 </a>
             @endrole
 
             <!-- MENU KHUSUS CUSTOMER -->
             @role('customer')
+                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Belanja</div>
                 <a href="{{ route('customer.dashboard') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customer.dashboard') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                     Halaman Utama
                 </a>
-                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Belanja</div>
                 <a href="{{ route('catalog.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('catalog.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                     Katalog Produk
                 </a>
@@ -92,50 +91,57 @@
                 <a href="{{ route('orders.my') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('orders.my', 'orders.show') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                     Pesanan Saya
                 </a>
-                <a href="{{ route('customers.lengkapi') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customers.lengkapi') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                <a href="{{ route('customer.lengkapi') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customer.lengkapi') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                     Profil Perusahaan
                 </a>
             @endrole
 
-            <!-- MENU KHUSUS SUPERADMIN -->
+            <!-- MENU SUPERADMIN -->
             @role('superadmin')
-            <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Sistem</div>
-            <a href="{{ route('settings.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('settings.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                Pengaturan
-            </a>
-            <a href="{{ route('users.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('users.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                Manajemen Staf
-            </a>
+                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Sistem</div>
+                <a href="{{ route('users.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('users.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Manajemen Staf
+                </a>
+                <a href="{{ route('settings.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('settings.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Pengaturan
+                </a>
             @endrole
         </nav>
     </aside>
 
     <!-- MAIN CONTENT -->
-    <div class="flex-1 flex flex-col min-w-0">
+    <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <!-- HEADER -->
-        <header class="h-16 bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between px-6">
-            <div class="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                {{ $title ?? 'Dashboard' }}
+        <header class="h-16 bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between px-4 md:px-6">
+            
+            <!-- Tombol Hamburger (Hanya Muncul di HP) -->
+            <div class="flex items-center gap-4">
+                <button @click="sidebarOpen = true" class="md:hidden text-zinc-500 hover:text-indigo-600 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <div class="text-sm font-medium text-zinc-500 dark:text-zinc-400 hidden md:block">
+                    {{ $title ?? 'Dashboard' }}
+                </div>
             </div>
 
             <!-- Profil & Logout -->
-            <div class="flex items-center space-x-6"> <!-- ubah space-x-4 jadi space-x-6 -->
-                
-                <!-- Tambahkan ini jika yang login adalah customer -->
+            <div class="flex items-center space-x-4 md:space-x-6">
                 @role('customer')
                     <livewire:cart-icon />
                 @endrole
 
-                <span class="text-sm font-medium text-zinc-900 dark:text-white">{{ auth()->user()->name }}</span>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="text-sm text-red-600 hover:text-red-500 font-medium">Logout</button>
-                </form>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-zinc-900 dark:text-white hidden md:block">{{ auth()->user()->name }}</span>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="text-sm text-red-600 hover:text-red-500 font-medium">Logout</button>
+                    </form>
+                </div>
             </div>
         </header>
 
         <!-- PAGE CONTENT -->
-        <main class="flex-1 p-6">
+        <main class="flex-1 p-4 md:p-6 overflow-y-auto">
             {{ $slot }}
         </main>
     </div>
