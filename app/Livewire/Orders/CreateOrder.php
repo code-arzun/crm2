@@ -18,10 +18,17 @@ class CreateOrder extends Component
     protected $rules = [
         'metode_pengiriman ' => 'required|in:ekspedisi,ambil_sendiri',
     ];
+    public $poin_ditukar = 0;
+    public $totalPoinCustomer = 0;
 
     public function mount()
     {
         $this->cart = session()->get('cart', []);
+        
+        // Ambil total poin customer
+        if (auth()->user()->customer) {
+            $this->totalPoinCustomer = auth()->user()->customer->totalPoints();
+        }
     }
 
     public function updateQty($id, $qty)
@@ -83,7 +90,9 @@ class CreateOrder extends Component
 
     public function getTotalProperty()
     {
-        return collect($this->cart)->sum('subtotal');
+        $subtotal = collect($this->cart)->sum('subtotal');
+        $diskonPoin = $this->poin_ditukar * 100; // 1 poin = Rp 100
+        return max(0, $subtotal - $diskonPoin);
     }
 
 // 1. Fungsi untuk membuka Modal Konfirmasi
@@ -116,6 +125,7 @@ class CreateOrder extends Component
             [
                 'metode_pengiriman' => $this->metode_pengiriman,
                 'catatan' => $this->catatan,
+                'poin_ditukar' => $this->poin_ditukar,
             ]
         );
 

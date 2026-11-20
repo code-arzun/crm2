@@ -94,6 +94,21 @@
                         <span class="text-zinc-500">Subtotal</span>
                         <span class="font-medium text-zinc-900 dark:text-white">Rp {{ number_format($this->getTotalProperty(), 0, ',', '.') }}</span>
                     </div>
+
+                    <!-- TUKAR POIN -->
+                    @if($totalPoinCustomer > 0)
+                        <div class="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-amber-800 dark:text-amber-300">Poin Anda: {{ $totalPoinCustomer }}</span>
+                            </div>
+                            <div class="flex gap-2 items-center">
+                                <input type="number" wire:model.live="poin_ditukar" min="0" max="{{ $totalPoinCustomer }}" class="w-20 px-2 py-1 text-sm border rounded border-amber-300 dark:bg-zinc-900">
+                                <span class="text-xs text-amber-700">poin ditukar</span>
+                            </div>
+                            <p class="text-[10px] text-amber-600 mt-1">*1 Poin = Rp 100</p>
+                        </div>
+                    @endif
+                    
                     <!-- Logika PPN -->
                     <div class="flex justify-between text-sm">
                         <span class="text-zinc-500">PPN</span>

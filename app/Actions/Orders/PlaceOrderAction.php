@@ -42,7 +42,19 @@ class PlaceOrderAction
             'catatan' => $data['catatan'],
         ]);
 
-        // 3. Buat Detail Order Items
+        // 2. Proses Penukaran Poin
+        if (!empty($data['poin_ditukar']) && $data['poin_ditukar'] > 0) {
+            $loyaltyService = new \App\Services\LoyaltyService();
+            $diskonPoin = $loyaltyService->redeemPoints($customer, $data['poin_ditukar'], $order);
+            
+            // Kurangi total order
+            $order->update([
+                'diskon' => $order->diskon + $diskonPoin,
+                'total' => $order->total - $diskonPoin,
+            ]);
+        }
+
+        // 4. Buat Detail Order Items
         foreach ($cart as $item) {
             $order->items()->create([
                 'product_id' => $item['id'],

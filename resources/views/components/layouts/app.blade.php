@@ -30,12 +30,14 @@
 
         <!-- Menu -->
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+            @role('superadmin|admin|finance|warehouse')
             <a href="{{ route('dashboard') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('dashboard') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                 Dashboard
             </a>
+            @endrole
 
             <!-- MENU KHUSUS ADMIN & SUPERADMIN -->
-            @role('superadmin|admin')
+            @role('superadmin|admin|finance')
                 <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Manajemen</div>
                 <a href="{{ route('admin.orders') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.orders') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
                     Semua Pesanan
@@ -75,27 +77,7 @@
                     Penerimaan Retur
                 </a>
             @endrole
-
-            <!-- MENU KHUSUS CUSTOMER -->
-            @role('customer')
-                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Belanja</div>
-                <a href="{{ route('customer.dashboard') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customer.dashboard') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                    Halaman Utama
-                </a>
-                <a href="{{ route('catalog.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('catalog.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                    Katalog Produk
-                </a>
-                <a href="{{ route('orders.create') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('orders.create') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                    Keranjang / Checkout
-                </a>
-                <a href="{{ route('orders.my') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('orders.my', 'orders.show') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                    Pesanan Saya
-                </a>
-                <a href="{{ route('customers.lengkapi') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customer.lengkapi') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
-                    Profil Perusahaan
-                </a>
-            @endrole
-
+            
             <!-- MENU SUPERADMIN -->
             @role('superadmin')
                 <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Sistem</div>
@@ -106,6 +88,33 @@
                     Pengaturan
                 </a>
             @endrole
+
+            <!-- MENU KHUSUS CUSTOMER -->
+            @role('customer')
+                <a href="{{ route('customer.dashboard') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customer.dashboard') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Halaman Utama
+                </a>
+                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Belanja</div>
+                <a href="{{ route('catalog.index') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('catalog.*') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Produk
+                </a>
+                <a href="{{ route('orders.create') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('orders.create') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Keranjang
+                </a>
+                <a href="{{ route('orders.my') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('orders.my', 'orders.show') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Pesanan Saya
+                </a>
+                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Pengaturan</div>
+                <a href="{{ route('customers.lengkapi') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customer.lengkapi') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Profil Perusahaan
+                </a>
+            @endrole
+
+            <!-- MENU PROFIL (Semua Role) -->
+                <div class="pt-4 pb-1 px-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Akun</div>
+                <a href="{{ route('customer.profile') }}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('customer.profile') ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-700' }}">
+                    Profil Saya
+                </a>
         </nav>
     </aside>
 

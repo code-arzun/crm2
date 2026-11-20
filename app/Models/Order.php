@@ -257,16 +257,28 @@ class Order extends Model
         $totalPesan = $this->items->sum('qty');
         
         // 3. Hitung total qty yang benar-benar sudah DITERIMA (status resi = 'diterima')
-        $totalDiterima = $this->shipments()
-            ->where('status', 'diterima')
-            ->with('items')
-            ->get()
-            ->flatMap->items
-            ->sum('qty_dikirim');
+        // $totalDiterima = $this->shipments()
+        //     ->where('status', 'diterima')
+        //     ->with('items')
+        //     ->get()
+        //     ->flatMap->items
+        //     ->sum('qty_dikirim');
+
+        $totalDiterima = \App\Models\ShipmentItem::whereHas('shipment', function($q) {
+            $q->where('order_id', $this->id)->where('status', 'diterima');
+        })->sum('qty_dikirim');
 
         // 4. Jika semua barang sudah diterima (>= total pesanan), barulah Selesai
-        if ($totalDiterima >= $totalPesan) {
+        // if ($totalDiterima >= $totalPesan) {
+        //     $this->update(['status' => 'selesai']);
+        // }
+
+        if ($totalDiterima >= $totalPesan && $this->status->value !== 'selesai') {
             $this->update(['status' => 'selesai']);
+
+            // TAMBAHKAN BARIS INI: Berikan Poin Loyalty
+            $loyaltyService = new \App\Services\LoyaltyService();
+            $loyaltyService->awardPointsForOrder($this);
         }
     }
 }

@@ -5,6 +5,7 @@ use App\Livewire\Auth\Login;
 use App\Livewire\Auth\Register;
 use App\Livewire\Catalog\Index as CatalogIndex;
 use App\Livewire\Customer\Dashboard as CustomerDashboard;
+use App\Livewire\CustomerProfile\Index as CustomerProfileIndex;
 use App\Livewire\Customers\Index as CustomersIndex;
 use App\Livewire\Customers\LengkapiProfil;
 use App\Livewire\Dashboard;
@@ -17,6 +18,8 @@ use App\Livewire\Orders\Show;
 use App\Livewire\Payments\VerifyIndex;
 use App\Livewire\Products\Index as ProductsIndex;
 use App\Livewire\Products\ManagePrices;
+use App\Livewire\Public\Home;
+use App\Livewire\Public\Catalog as PublicCatalog;
 use App\Livewire\Returns\Index as ReturnsIndex;
 use App\Livewire\Returns\ReceiveIndex;
 use App\Livewire\Returns\Show as ReturnShow;
@@ -27,9 +30,13 @@ use App\Livewire\Warehouse\Shipments;
 use App\Livewire\Warehouse\StockLog;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
+// Publik
+Route::get('/', Home::class)->name('home');
+Route::get('/katalog', PublicCatalog::class)->name('public.catalog');
+
+// Route::get('/', function () {
+//     return redirect()->route('login');
+// });
 
 Route::get('/login', Login::class)->middleware('guest')->name('login');
 
@@ -39,7 +46,7 @@ Route::post('/logout', function () {
     auth()->logout();
     session()->invalidate();
     session()->regenerateToken();
-    return redirect()->route('login');
+    return redirect()->route('home');
 })->middleware('auth')->name('logout');
 
 Route::get('/settings', SettingsIndex::class)->middleware(['auth', 'role:superadmin'])->name('settings.index');
@@ -73,3 +80,5 @@ Route::get('/surat-jalan/{shipment}/download', [InvoiceController::class, 'downl
 Route::get('/register', Register::class)->middleware('guest')->name('register');
 Route::get('/customer/dashboard', CustomerDashboard::class)->middleware(['auth', 'role:customer'])->name('customer.dashboard');
 Route::get('/lengkapi-profil', LengkapiProfil::class)->middleware(['auth'])->name('customers.lengkapi');
+Route::get('/customer-profile', CustomerProfileIndex::class)->middleware(['auth'])->name('customer.profile');
+
